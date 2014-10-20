@@ -1,0 +1,37 @@
+-- Crusher outline
+
+type Game = (Board, Int)
+type Board = [(Position, Piece)]
+data Position = Pos Int Int
+				deriving (Ord, Eq, Show)
+type Piece = Char
+
+crusher :: [String] -> Int -> Char -> Int -> [[String]] -> [[String]]
+crusher board size side depth history = 
+	toListOfStrings (crusher' 	(makeGame board size)  
+								side 
+								depth 
+								(map makeGame size history))
+	
+crusher' :: Game -> Char -> Int -> [Game] -> [Game]
+crusher' board _ 0 history = []
+crusher' board side depth history = miniMax (crushChildren boardList side depth history) 
+	where boardList = generateBoards board side depth history
+
+crushChildren :: [Game]	-> 	[Game]  
+crushChildren [] _ _ _ = []
+crushChildren boardList side depth history = 
+	(crusher' (head boardList) side (depth - 1) (head boardList : history)) :
+		   crushChildren (tail boardList)
+		
+
+generateBoards board side history = ((findBoards board side history), history)
+	
+makeGame :: [String] -> Int -> Game
+makeGame board size = getHeuristic (makeBoard board size)
+
+getHeuristic :: Board -> Game
+getHeuristic board = ([],0)
+
+makeBoard :: [String] -> Board
+makeBoard los = []
