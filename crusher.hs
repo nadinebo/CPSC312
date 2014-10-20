@@ -8,14 +8,17 @@ type Piece = Char
 
 crusher :: [String] -> Int -> Char -> Int -> [[String]] -> [[String]]
 crusher board size side depth history = 
-	toListOfStrings (crusher' 	(makeGame board size)  
+	toListOfStrings ((crusher' 	(makeGame board size)  
 								side 
 								depth 
-								(map makeGame size history))
+								(map makeGame size history)) : history)
 	
-crusher' :: Game -> Char -> Int -> [Game] -> [Game]
-crusher' board _ 0 history = [board]
-crusher' board side depth history = miniMax (crushChildren boardList side depth history) 
+crusher' :: Game -> Char -> Int -> [Game] -> Game
+crusher' board _ 0 history = board
+crusher' board side depth history = miniMax (crushChildren 	boardList 
+															side 
+															depth 
+															history) 
 	where boardList = generateBoards board side depth history
 
 crushChildren :: [Game]	-> 	[Game]  
@@ -35,3 +38,9 @@ getHeuristic board = ([],0)
 
 makeBoard :: [String] -> Board
 makeBoard los = []
+
+getHr :: Game -> Int
+get game = fst game 
+
+getX :: Position -> Int
+getX (Pos x _) = x
