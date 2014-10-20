@@ -14,7 +14,7 @@ crusher board size side depth history =
 								(map makeGame size history))
 	
 crusher' :: Game -> Char -> Int -> [Game] -> [Game]
-crusher' board _ 0 history = []
+crusher' board _ 0 history = [board]
 crusher' board side depth history = miniMax (crushChildren boardList side depth history) 
 	where boardList = generateBoards board side depth history
 
@@ -24,8 +24,8 @@ crushChildren boardList side depth history =
 	(crusher' (head boardList) side (depth - 1) (head boardList : history)) :
 		   crushChildren (tail boardList)
 		
-
-generateBoards board side history = ((findBoards board side history), history)
+generateBoards :: Game -> Char -> [Game]
+generateBoards board side history = [] -- TODO
 	
 makeGame :: [String] -> Int -> Game
 makeGame board size = getHeuristic (makeBoard board size)
