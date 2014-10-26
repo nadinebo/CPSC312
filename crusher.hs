@@ -51,36 +51,36 @@ getX (Pos x _) = x
 getY :: Position -> Int
 getY (Pos _ y) = y
 
-generateUp_c5n7 :: [[Char]] -> Char -> [[String]] -> Position -> [[Char]]
-generateUp_c5n7 board side history (Pos x y)
+generateUp :: [[Char]] -> Char -> [[String]] -> Position -> [[Char]]
+generateUp board side history (Pos x y)
 	-- Forward Up Jump
-	| (canJumpUp board side (Pos (x - 2) (y)) history)
-				= (movePiece board side (Pos x y) (Pos (x - 2) (y))) : history
+	| (canJumpUpForward board side (Pos x y) (Pos (x - 2) (y)) history)
+				= movePiece board side (Pos x y) (Pos (x - 2) (y))
 	-- Backward Up Jump
-	| (canJumpUp board side (Pos (x - 2) (y - 2)) history)
-				= (movePiece board side (Pos x y) (Pos (x - 2) (y - 2))) : history
+	| (canJumpUpBackward board side (Pos x y) (Pos (x - 2) (y - 2)) history)
+				= movePiece board side (Pos x y) (Pos (x - 2) (y - 2))
 	-- Forward Up Slide
-	| (canSlideUp board side (Pos (x - 1) (y)) history)
-				= (movePiece board side (Pos x y) (Pos (x - 1) (y))) : history
+	| (canSlide board side (Pos x y) (Pos (x - 1) (y)) history)
+				= movePiece board side (Pos x y) (Pos (x - 1) (y))
 	-- Backward Up Slide
-	| (canSlideUp board side (Pos (x - 1) (y - 1)) history)
-				= (movePiece board side (Pos x y) (Pos (x - 1) (y - 1))) : history	
+	| (canSlide board side (Pos x y) (Pos (x - 1) (y - 1)) history)
+				= movePiece board side (Pos x y) (Pos (x - 1) (y - 1))
 
 
-generateDown_c5n7 :: [[Char]] -> Char -> [[String]] -> Position -> [[Char]]
-generateDown_c5n7 board side history (Pos x y)
+generateDown :: [[Char]] -> Char -> [[String]] -> Position -> [[Char]]
+generateDown board side history (Pos x y)
 	-- Forward Down Jump
-	| (canJumpDown board side (Pos (x + 2) (y)) history) 
-				= (movePiece board side (Pos x y) (Pos (x + 2) (y))) : history
+	| (canJumpDownForward board side (Pos x y) (Pos (x + 2) (y)) history) 
+				= movePiece board side (Pos x y) (Pos (x + 2) (y))
 	-- Backward Down Jump
-	| (canJumpDown board side (Pos (x + 2) (y - 2)) history) 
-				= (movePiece board side (Pos x y) (Pos (x + 2) (y - 2))) : history
+	| (canJumpDownBackward board side (Pos x y) (Pos (x + 2) (y - 2)) history) 
+				= movePiece board side (Pos x y) (Pos (x + 2) (y - 2))
 	-- Forward Down Slide
-	| (canSlideDown board side (Pos (x + 1) (y)) history) 
-				= (movePiece board side (Pos (x + 1) (y))) : history
+	| (canSlide board side (Pos x y) (Pos (x + 1) (y)) history) 
+				= movePiece board side (Pos x y) (Pos (x + 1) (y))
 	-- Backward Down Slide
-	| (canSlideDown board side (Pos (x + 1) (y - 1)) history) 
-				= (movePiece board side (Pos (x + 1) (y - 1))) : history
+	| (canSlide board side (Pos x y) (Pos (x + 1) (y - 1)) history) 
+				= movePiece board side (Pos x y) (Pos (x + 1) (y - 1))
 
 
 -- Rewritten with take and drop!
@@ -120,6 +120,93 @@ boardListDown loc current start
 		= (take current loc) : 
 			(boardListDown (drop current loc) (current - 1) start)
 --}
+
+canJumpUpForward :: [[Char]] -> Char -> Position -> Position -> [[String]] -> Bool
+canJumpUpForward board side from_pos to_pos history
+	| ((canMakeJumpUpForward board side from_pos to_pos) == True) 
+		&& ((elem (movePiece board side from_pos to_pos) history) == False) = True
+	| otherwise = False
+
+canMakeJumpUpForward :: [[Char]] -> Char -> Position -> Position -> Bool
+canMakeJumpUpForward board side from_pos to_pos
+	| ((isSame board side ((getX from_pos) - 1) (getY from_pos)) == True)
+		&& ((isSame board side (getX to_pos) (getY to_pos)) == False)
+		= True
+	| otherwise = False
+
+canJumpUpBackward :: [[Char]] -> Char -> Position -> Position -> [[String]] -> Bool
+canJumpUpBackward board side from_pos to_pos history
+	| ((canMakeJumpUpBackward board side from_pos to_pos) == True) 
+		&& ((elem (movePiece board side from_pos to_pos) history) == False) = True
+	| otherwise = False
+
+canMakeJumpUpBackward :: [[Char]] -> Char -> Position -> Position -> Bool
+canMakeJumpUpBackward board side from_pos to_pos
+	| ((isSame board side ((getX from_pos) - 1) ((getY from_pos) - 1)) == True)
+		&& ((isSame board side (getX to_pos) (getY to_pos)) == False)
+		= True
+	| otherwise = False
+
+canJumpDownForward :: [[Char]] -> Char -> Position -> Position -> [[String]] -> Bool
+canJumpDownForward board side from_pos to_pos history
+	| ((canMakeJumpDownForward board side from_pos to_pos) == True) 
+		&& ((elem (movePiece board side from_pos to_pos) history) == False) = True
+	| otherwise = False
+
+canMakeJumpDownForward :: [[Char]] -> Char -> Position -> Position -> Bool
+canMakeJumpDownForward board side from_pos to_pos
+	| ((isSame board side ((getX from_pos) + 1) (getY from_pos)) == True)
+		&& ((isSame board side (getX to_pos) (getY to_pos)) == False)
+		= True
+	| otherwise = False
+
+canJumpDownBackward :: [[Char]] -> Char -> Position -> Position -> [[String]] -> Bool
+canJumpDownBackward board side from_pos to_pos history
+	| ((canMakeJumpDownBackward board side from_pos to_pos) == True) 
+		&& ((elem (movePiece board side from_pos to_pos) history) == False) = True
+	| otherwise = False
+
+canMakeJumpDownBackward :: [[Char]] -> Char -> Position -> Position -> Bool
+canMakeJumpDownBackward board side from_pos to_pos
+	| ((isSame board side ((getX from_pos) + 1) ((getY from_pos) - 1)) == True)
+		&& ((isSame board side (getX to_pos) (getY to_pos)) == False)
+		= True
+	| otherwise = False
+
+canSlide :: [[Char]] -> Char -> Position -> Position -> [[String]] -> Bool
+canSlide board side from_pos to_pos history
+	| ((canMakeSlide board side from_pos to_pos) == True) 
+		&& ((elem (movePiece board side from_pos to_pos) history) == False) = True
+	| otherwise = False
+
+canMakeSlide :: [[Char]] -> Char -> Position -> Position -> Bool
+canMakeSlide board side from_pos to_pos
+	| ((isEmpty board side (getX to_pos) (getY to_pos)) == True) = True
+	| otherwise = False
+
+
+isSame :: [[Char]] -> Char -> Int -> Int -> Bool
+isSame board side x y
+	| ((getElement board x y) == side) = True
+	| otherwise = False
+
+getElement :: [[Char]] -> Int -> Int -> Char
+getElement board x y
+	= getElementInCol (board!!x) y 0
+
+getElementInCol :: [Char] -> Int -> Int -> Char
+getElementInCol boardRow col curr
+	| null boardRow = ' '
+	| (curr == col) = (head boardRow)
+	| otherwise = getElementInCol (tail boardRow) col (curr + 1)
+
+
+isEmpty :: [[Char]] -> Char -> Int -> Int -> Bool
+isEmpty board side x y
+	| ((getElement board x y) == '-') = True
+	| otherwise = False
+
+
 
 movePiece :: [[Char]] -> Char -> Position -> Position -> [[Char]]
 movePiece board side from_pos to_pos
