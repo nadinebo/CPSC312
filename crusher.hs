@@ -31,16 +31,16 @@ generateBoards :: Game -> Char -> [Game]
 generateBoards board side history = [] -- TODO
 	
 makeGame :: [String] -> Int -> Game
-makeGame board size = getHeuristic (makeBoard board size)
+makeGame board size = makeHeuristic (makeBoard board size)
 
-getHeuristic :: Board -> Game
-getHeuristic board = ([],0)
+makeHeuristic :: Board -> Game
+makeHeuristic board = ([],0)
 
 makeBoard :: [String] -> Board
 makeBoard los = []
 
 getHr :: Game -> Int
-get game = fst game 
+getHr game = snd game 
 
 getX :: Position -> Int
 getX (Pos x _) = x
