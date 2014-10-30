@@ -6,12 +6,14 @@ data Position = Pos Int Int
 				deriving (Ord, Eq, Show)
 type Piece = Char
 
-crusher_c5n7 :: [String] -> Char -> Int -> [[String]] -> [[String]]
+crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
 crusher_c5n7 board side depth size history = 
-	toListOfStrings ((crusher' 	(makeGame board size)  
+	(toListOfStrings (crusher' 	(head (makeGames size [board]))  
 								side 
 								depth 
-								(map makeGame size history)) : history)
+								(makeGames size history))) : history
+								
+toListOfStrings logame = []
 	
 crusher' :: Game -> Char -> Int -> [Game] -> Game
 crusher' board _ 0 history = board
@@ -21,23 +23,36 @@ crusher' board side depth history = miniMax (crushChildren 	boardList
 															history) 
 	where boardList = generateBoards board side depth history
 
-crushChildren :: [Game]	-> 	[Game]  
+crushChildren :: [Game]	-> Char -> Int -> [Game] -> [Game] 
 crushChildren [] _ _ _ = []
 crushChildren boardList side depth history = 
 	(crusher' (head boardList) side (depth - 1) (head boardList : history)) :
-		   crushChildren (tail boardList)
+		   (crushChildren (tail boardList) side depth history)
 		
-generateBoards :: Game -> Char -> [Game]
-generateBoards board side history = [] -- TODO
+generateBoards :: Game -> Char -> Int -> [Game] -> [Game]
+generateBoards board side depth history = [] -- TODO
 	
-makeGame :: [String] -> Int -> Game
-makeGame board size = makeHeuristic (makeBoard board size)
+
+makeGames :: Int -> [String] -> [Game]
+makeGames size lob = [(makeGame board size) | board <- lob]
+	where makeGame board size = 
+		makeHeuristic (makeBoard (splitIntoRows_c5n7 board size) 1 size)
+
+testMakeGames0 = makeGames 2 ["-wb-wb-"]
+testMakeGames1 = makeGames 3 ["www-ww-------bb-bbb"]
 
 makeHeuristic :: Board -> Game
-makeHeuristic board = ([],0)
+makeHeuristic board = (board, 0)
 
-makeBoard :: [String] -> Board
-makeBoard los = []
+makeBoard :: [String] -> Int -> Int -> Board
+makeBoard (str:los) curr size = 
+	if (curr == ((2 * size) - 1)) 
+	then (makeRow str curr 1)
+	else ((makeRow str curr 1) ++ (makeBoard los (curr + 1) size))
+
+makeRow :: String -> Int -> Int -> Board
+makeRow [] row col = []
+makeRow (ch: loc) row col = ((Pos row col), ch) : (makeRow loc row (col + 1))
 
 getHr :: Game -> Int
 getHr game = snd game 
@@ -51,7 +66,10 @@ getX (Pos x _) = x
 getY :: Position -> Int
 getY (Pos _ y) = y
 
-generateUp :: [[Char]] -> Char -> [[String]] -> Position -> [[Char]]
+miniMax :: [Game] -> Game
+miniMax logame = ([((Pos 0 0), '-')], 0)
+
+generateUp :: Game -> Char -> [Game] -> Position -> [Game]
 generateUp board side history (Pos x y)
 	-- Forward Up Jump
 	| (canJumpUpForward board side (Pos x y) (Pos (x - 2) (y)) history)
@@ -84,7 +102,7 @@ generateDown board side history (Pos x y)
 
 
 -- Rewritten with take and drop!
-splitIntoRows_c5n7 :: [Char] -> Int -> [[Char]]
+splitIntoRows_c5n7 :: String -> Int -> [String]
 splitIntoRows_c5n7 board n
 	= splitHelper_c5n7 board n n 0
 
@@ -186,13 +204,11 @@ canMakeSlide board side from_pos to_pos
 
 
 isSame :: [[Char]] -> Char -> Int -> Int -> Bool
-isSame board side x y
-	| ((getElement board x y) == side) = True
-	| otherwise = False
+isSame board side x y = ((getElement board x y) == [side])
 
-getElement :: [[Char]] -> Int -> Int -> Char
-getElement board x y
-	= getElementInCol (board!!x) y 0
+getElement :: Game -> Int -> Int -> [Char]
+getElement board x y = [char | (pos, char) <- (fst board), pos == (Pos x y)]
+--	= getElementInCol (board!!x) y 0
 
 getElementInCol :: [Char] -> Int -> Int -> Char
 getElementInCol boardRow col curr
@@ -201,10 +217,9 @@ getElementInCol boardRow col curr
 	| otherwise = getElementInCol (tail boardRow) col (curr + 1)
 
 
-isEmpty :: [[Char]] -> Char -> Int -> Int -> Bool
-isEmpty board side x y
-	| ((getElement board x y) == '-') = True
-	| otherwise = False
+isEmpty :: Game -> Char -> Int -> Int -> Bool
+isEmpty board side x y = ((getElement board x y) == ['-'])
+
 
 
 
