@@ -309,3 +309,33 @@ replaceElement boardRow side start_col goal_col
 	| (start_col == goal_col) = side : (tail boardRow)
 	| otherwise = (head boardRow) : (replaceElement (tail boardRow) side (start_col + 1) goal_col)
 
+
+
+
+
+
+
+
+----- New movePiece -----
+
+isEmpty :: Board -> Position -> Bool
+isEmpty board pos 
+	= [char | (posToCheck, char) <- board, pos == posToCheck] == ['-']
+
+movePiece :: Board -> Char -> Position -> Position -> Board
+movePiece board side from_pos to_pos
+	| (isEmpty board to_pos) 
+		= (replaceChars board side from_pos to_pos)
+	| otherwise = board
+
+
+
+replaceChars :: Board -> Char -> Position -> Position -> Board
+replaceChars board side from_pos to_pos
+	= [(replace' side (pos, char)) | (pos,char) <- board] 
+		where replace' side (pos,char)
+				| (pos == from_pos) = (pos, '-')
+				| (pos == to_pos) = (pos, side)
+				| otherwise = (pos,char)
+
+
