@@ -86,13 +86,12 @@ splitHelper_c5n7 board n row_n curr
 
 
 --NOTES:
-{--
-For now I put heurist as 0
-For now it is returning history if no moves are available
---}
+
+--For now I put heurist as 0
+--For now it is returning history if no moves are available
+
 
 generateUp :: Game -> Char -> [Game] -> Position -> [Game]
---generateUp :: [[Char]] -> Char -> [[String]] -> Position -> [[[Char]]]
 generateUp board side history (Pos x y)
 	-- Forward Up Jump
 	| (canJumpUpForward board side (Pos x y) (Pos (x - 2) (y)) history)
@@ -109,7 +108,6 @@ generateUp board side history (Pos x y)
 	| otherwise = history --for now
 
 
---generateDown :: [[Char]] -> Char -> [[String]] -> Position -> [[[Char]]]
 generateDown :: Game -> Char -> [Game] -> Position -> [Game]
 generateDown board side history (Pos x y)
 	-- Forward Down Jump
@@ -255,15 +253,6 @@ isSame board side x y = ((getElement board x y) == [side])
 
 getElement :: Game -> Int -> Int -> [Char]
 getElement board x y = [char | (pos, char) <- (fst board), pos == (Pos x y)]
---	= getElementInCol (board!!x) y 0
-
-getElementInCol :: [Char] -> Int -> Int -> Char
-getElementInCol boardRow col curr
-	| null boardRow = ' '
-	| (curr == col) = (head boardRow)
-	| otherwise = getElementInCol (tail boardRow) col (curr + 1)
-
-
 
 
 isEmpty :: Board -> Position -> Bool
