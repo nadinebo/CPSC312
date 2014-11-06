@@ -417,10 +417,6 @@ playCrusher19 = crusherPrint 4 (playCrusher
 						
 playCrusher initBoard numMoves side size history 
 	= playCrusherH initBoard 1 numMoves side size history
-	
---	| (mod numMoves 2) == 0 	
---		= playCrusherH initBoard 1 numMoves (otherSide side) size history
---	| otherwise = playCrusherOdd initBoard numMoves side size history
 
 playCrusherH initBoard currMove numMoves side size history 
 	| currMove == numMoves	= currentMove
@@ -438,9 +434,6 @@ playCrusher' initBoard 1 side history =
 playCrusher' initBoard numMoves side history = 
 	crusher_c5n7 (head result) (otherSide side) 4 3 (tail result)
 	where result = playCrusher' initBoard (numMoves-1) (otherSide side) history
-
---crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
---generateUps :: Board -> (Position, Piece) -> [Board]
 
 -- Consumes a list of list of String, lolos, and prints it to the console in 
 -- the format suggested by the assignment for ease of reading. If the solution 
