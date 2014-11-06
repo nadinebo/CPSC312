@@ -9,246 +9,260 @@ data Position = Pos Int Int
 				deriving (Ord, Eq, Show)
 type Piece = Char
 
+--Added stuff here
+
+getBestMove_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
+getBestMove_c5n7 board side depth size history
+	= (firstMove : [board]) ++ history
+	where 
+		firstMove = (listOfMoves)!!1
+		listOfMoves = reverse (playCrusher_c5n7 board depth side size history)
+
+
+
+---stuff ends here
+
 crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
 crusher_c5n7 board side depth size history = 
-	(toString 
-		(fst (crusher'
-				(head (makeBoards size [board]))  
+	(toString_c5n7 
+		(fst (crusher'_c5n7
+				(head (makeBoards_c5n7 size [board]))  
 				(toUpper side) 
 				0 
 				depth 
-				(makeBoards size history)
+				(makeBoards_c5n7 size history)
 				True))) : (board : history)
 
 -- Consumes a board and converts it to a list of String.
-toString :: Board -> String
-toString board = getRows board 1
+toString_c5n7 :: Board -> String
+toString_c5n7 board = getRows_c5n7 board 1
 
--- Helper function for toListOfString. Consumes a Board, board, and an Integer, 
+-- Helper function for toListOfString_c5n7. Consumes a Board, board, and an Integer, 
 -- row, to convert into a string and produces a list of String by combining
 -- each row together into a list.
-getRows :: Board -> Int -> String
-getRows board row
-	| row == (getMax board) + 1	= []
+getRows_c5n7 :: Board -> Int -> String
+getRows_c5n7 board row
+	| row == (getMax_c5n7 board) + 1	= []
 	| otherwise					
-		= (getString board row) ++ getRows board (row + 1)
+		= (getString_c5n7 board row) ++ getRows_c5n7 board (row + 1)
 		
 -- Consumes a Board and produces the maximum column value on the board. Allows
 -- getRows to terminate appropriately, and Boards of different sizes to be 
 -- processed.
-getMax :: Board -> Int
-getMax board = maximum [n | (Pos m n, char) <- board]
+getMax_c5n7 :: Board -> Int
+getMax_c5n7 board = maximum [n | (Pos m n, char) <- board]
 
 -- Consumes a Board, board, and an Integer, row, and produces a String 
 -- corresponding to that row in board. Collects all the character values 
 -- associated with the row, row and creates a String from them.
-getString :: Board -> Int -> String
-getString board row = [char | (Pos m n, char) <- (sort board), m == row]
+getString_c5n7 :: Board -> Int -> String
+getString_c5n7 board row = [char | (Pos m n, char) <- (sort board), m == row]
 									
-crusher' :: Board -> Char -> Int -> Int -> [Board] -> Bool -> Game
-crusher' board side currDepth depth history isFirst
+crusher'_c5n7 :: Board -> Char -> Int -> Int -> [Board] -> Bool -> Game
+crusher'_c5n7 board side currDepth depth history isFirst
 	| currDepth == depth 		= game
-	| gameOver board boardList	= addHr game (gameEndScore currDepth)
+	| gameOver_c5n7 board boardList	= addHr_c5n7 game (gameEndScore_c5n7 currDepth)
 	| not isFirst 
-		= addHr game (getHr (head nextGame))
+		= addHr_c5n7 game (getHr_c5n7 (head nextGame))
 	| otherwise 
 	= if null nextGame then game else (head nextGame)
 	where 
-		game = makeHeuristic board side
+		game = makeHeuristic_c5n7 board side
 		evaluatedBoards = 
-			evaluateBoards boardList side currDepth depth history
-		boardList = generateBoards board side currDepth history
-		nextGame = miniMax currDepth evaluatedBoards
+			evaluateBoards_c5n7 boardList side currDepth depth history
+		boardList = generateBoards_c5n7 board side currDepth history
+		nextGame = miniMax_c5n7 currDepth evaluatedBoards
 
-evaluateBoards :: [Board] -> Char -> Int -> Int -> [Board] -> [Game] 
-evaluateBoards [] _ _ _ _ = []
-evaluateBoards boardList side currDepth depth history = 
-	(crusher' (head boardList) side (currDepth + 1) depth history False) :
-		   (evaluateBoards (tail boardList) side currDepth depth history)
+evaluateBoards_c5n7 :: [Board] -> Char -> Int -> Int -> [Board] -> [Game] 
+evaluateBoards_c5n7 [] _ _ _ _ = []
+evaluateBoards_c5n7 boardList side currDepth depth history = 
+	(crusher'_c5n7 (head boardList) side (currDepth + 1) depth history False) :
+		   (evaluateBoards_c5n7 (tail boardList) side currDepth depth history)
 
-gameOver :: Board -> [Board] -> Bool		   
-gameOver board [] = True 
-gameOver board _ = 
-	(notEnoughPieces board 'W') || (notEnoughPieces board 'B') 
+gameOver_c5n7 :: Board -> [Board] -> Bool		   
+gameOver_c5n7 board [] = True 
+gameOver_c5n7 board _ = 
+	(notEnoughPieces_c5n7 board 'W') || (notEnoughPieces_c5n7 board 'B') 
 
-notEnoughPieces :: Board -> Char -> Bool
-notEnoughPieces board side = (length (getSide side board)) < (getSize board)
+notEnoughPieces_c5n7 :: Board -> Char -> Bool
+notEnoughPieces_c5n7 board side = (length (getSide_c5n7 side board)) < (getSize_c5n7 board)
 
-getSize :: Board -> Int
-getSize board = length [col | (Pos row col, _) <- board, row == 1] 
+getSize_c5n7 :: Board -> Int
+getSize_c5n7 board = length [col | (Pos row col, _) <- board, row == 1] 
 		
-generateBoards :: Board -> Char -> Int -> [Board] -> [Board]
-generateBoards board side depth history 
-	= (generateBoards' board history (getSide currMove board))
-	where currMove = if ((mod depth 2) == 1) then (otherSide side) else side
+generateBoards_c5n7 :: Board -> Char -> Int -> [Board] -> [Board]
+generateBoards_c5n7 board side depth history 
+	= (generateBoards'_c5n7 board history (getSide_c5n7 currMove board))
+	where currMove = if ((mod depth 2) == 1) then (otherSide_c5n7 side) else side
 	
-otherSide :: Char -> Char
-otherSide side = if (side == 'w' || side == 'W') then 'B' else 'W'
+otherSide_c5n7 :: Char -> Char
+otherSide_c5n7 side = if (side == 'w' || side == 'W') then 'B' else 'W'
 
-generateBoards' :: Board -> [Board] -> [(Position, Piece)] -> [Board]	
-generateBoards' _ _ [] = []
-generateBoards' board history (piece:pieces) = 
-	(generateBoardsFromPiece board history piece) ++ (generateBoards' board history pieces)
+generateBoards'_c5n7 :: Board -> [Board] -> [(Position, Piece)] -> [Board]	
+generateBoards'_c5n7 _ _ [] = []
+generateBoards'_c5n7 board history (piece:pieces) = 
+	(generateBoardsFromPiece_c5n7 board history piece) ++ (generateBoards'_c5n7 board history pieces)
 
-getSide :: Char -> Board -> [(Position, Piece)]
-getSide side board = [(pos, char) | (pos, char) <- board, char == side]
+getSide_c5n7 :: Char -> Board -> [(Position, Piece)]
+getSide_c5n7 side board = [(pos, char) | (pos, char) <- board, char == side]
 
-generateBoardsFromPiece :: Board -> [Board] -> (Position, Piece) -> [Board]
-generateBoardsFromPiece board history piece =
-	filterHistory ((generateUps board piece) ++ 
-					(generateDowns board piece) ++
-					(generateHorizontal board piece)) history
+generateBoardsFromPiece_c5n7 :: Board -> [Board] -> (Position, Piece) -> [Board]
+generateBoardsFromPiece_c5n7 board history piece =
+	filterHistory_c5n7 ((generateUps_c5n7 board piece) ++ 
+					(generateDowns_c5n7 board piece) ++
+					(generateHorizontal_c5n7 board piece)) history
 	
-filterHistory :: [Board] -> [Board] -> [Board]
-filterHistory loboards history = 
+filterHistory_c5n7 :: [Board] -> [Board] -> [Board]
+filterHistory_c5n7 loboards history = 
 	[board | board <- loboards, not (elem board history)]
 
-generateUps :: Board -> (Position, Piece) -> [Board]	
-generateUps board piece = 	(slideUpLeft board piece) ++ 
-							(slideUpRight board piece) ++
-							(jumpUpLeft board piece) ++
-							(jumpUpRight board piece)
+generateUps_c5n7 :: Board -> (Position, Piece) -> [Board]	
+generateUps_c5n7 board piece = (slideUpLeft_c5n7 board piece) ++ 
+							(slideUpRight_c5n7 board piece) ++
+							(jumpUpLeft_c5n7 board piece) ++
+							(jumpUpRight_c5n7 board piece)
 
-generateDowns :: Board -> (Position, Piece) -> [Board]
-generateDowns board piece = (slideDownLeft board piece) ++
-							(slideDownRight board piece) ++
-							(jumpDownLeft board piece) ++
-							(jumpDownRight board piece)
+generateDowns_c5n7 :: Board -> (Position, Piece) -> [Board]
+generateDowns_c5n7 board piece = (slideDownLeft_c5n7 board piece) ++
+							(slideDownRight_c5n7 board piece) ++
+							(jumpDownLeft_c5n7 board piece) ++
+							(jumpDownRight_c5n7 board piece)
 							
-generateHorizontal :: Board -> (Position, Piece) -> [Board]							
-generateHorizontal board piece = 	(slideLeft board piece) ++
-									(slideRight board piece) ++
-									(jumpLeft board piece) ++
-									(jumpRight board piece)
+generateHorizontal_c5n7 :: Board -> (Position, Piece) -> [Board]							
+generateHorizontal_c5n7 board piece = (slideLeft_c5n7 board piece) ++
+									(slideRight_c5n7 board piece) ++
+									(jumpLeft_c5n7 board piece) ++
+									(jumpRight_c5n7 board piece)
 
-doSlide board (pos, colour) newPos	
-	| isEmpty board newPos = 
+doSlide_c5n7 board (pos, colour) newPos	
+	| isEmpty_c5n7 board newPos = 
 		-- isEmpty checks if a location is '-' so also checks if it is on board
-		[(replaceChars board colour pos newPos)]
+		[(replaceChars_c5n7 board colour pos newPos)]
 	| otherwise	= []
 	
-slideUpLeft board (pos, colour) = doSlide board (pos, colour) newPos
-		where newPos = (findUpLeft board pos)
+slideUpLeft_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
+		where newPos = (findUpLeft_c5n7 board pos)
 	
-slideUpRight board (pos, colour) = doSlide board (pos, colour) newPos
-		where newPos = (findUpRight board pos)
+slideUpRight_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
+		where newPos = (findUpRight_c5n7 board pos)
 
-doJump board (pos, colour) jumpPos newPos 
-	| isGoodJump board colour jumpPos newPos
-		= [(replaceChars board colour pos newPos)]
+doJump_c5n7 board (pos, colour) jumpPos newPos 
+	| isGoodJump_c5n7 board colour jumpPos newPos
+		= [(replaceChars_c5n7 board colour pos newPos)]
 	| otherwise = []
 		
-jumpUpLeft board (pos, colour) = doJump board (pos, colour) jumpPos newPos 
+jumpUpLeft_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where
-			jumpPos = findUpLeft board pos 
-			newPos = findUpLeft board jumpPos
+			jumpPos = findUpLeft_c5n7 board pos 
+			newPos = findUpLeft_c5n7 board jumpPos
 
-jumpUpRight board (pos, colour) = doJump board (pos, colour) jumpPos newPos 
+jumpUpRight_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 
-			jumpPos = findUpRight board pos 
-			newPos = findUpRight board jumpPos
+			jumpPos = findUpRight_c5n7 board pos 
+			newPos = findUpRight_c5n7 board jumpPos
 
-slideDownLeft board (pos, colour) = doSlide board (pos, colour) newPos
-		where newPos = (findDownLeft board pos)
+slideDownLeft_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
+		where newPos = (findDownLeft_c5n7 board pos)
 	
-slideDownRight board (pos, colour) = doSlide board (pos, colour) newPos
-		where newPos = (findDownRight board pos)
+slideDownRight_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
+		where newPos = (findDownRight_c5n7 board pos)
 	
-jumpDownLeft board (pos, colour) = doJump board (pos, colour) jumpPos newPos 
+jumpDownLeft_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 	
-			jumpPos = findDownLeft board pos
-			newPos = findDownLeft board jumpPos
+			jumpPos = findDownLeft_c5n7 board pos
+			newPos = findDownLeft_c5n7 board jumpPos
 
-jumpDownRight board (pos, colour) = doJump board (pos, colour) jumpPos newPos 
+jumpDownRight_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 	
-			jumpPos = findDownRight board pos 
-			newPos = findDownRight board jumpPos
+			jumpPos = findDownRight_c5n7 board pos 
+			newPos = findDownRight_c5n7 board jumpPos
 			
-slideLeft board (Pos row col, colour) = 
-	doSlide board (Pos row col, colour) newPos
+slideLeft_c5n7 board (Pos row col, colour) = 
+	doSlide_c5n7 board (Pos row col, colour) newPos
 		where newPos = (Pos row (col - 1))
 					
-slideRight board (Pos row col, colour) =
-	doSlide board (Pos row col, colour) newPos
+slideRight_c5n7 board (Pos row col, colour) =
+	doSlide_c5n7 board (Pos row col, colour) newPos
 		where newPos = (Pos row (col + 1))
 
-jumpLeft board (Pos row col, colour) = 
-	doJump board (Pos row col, colour) jumpPos newPos 
+jumpLeft_c5n7 board (Pos row col, colour) = 
+	doJump_c5n7 board (Pos row col, colour) jumpPos newPos 
 		where 	
 			jumpPos = Pos row (col - 1) 
 			newPos = Pos row (col - 2)
 
-jumpRight board (Pos row col, colour) = 
-	doJump board (Pos row col, colour) jumpPos newPos 
+jumpRight_c5n7 board (Pos row col, colour) = 
+	doJump_c5n7 board (Pos row col, colour) jumpPos newPos 
 		where 	
 			jumpPos = Pos row (col + 1) 
 			newPos = Pos row (col + 2)
 
-isGoodJump :: Board -> Char -> Position -> Position -> Bool
-isGoodJump board colour jumpPos newPos =
-	(isSame board colour jumpPos) && (isDifferent board colour newPos)
+isGoodJump_c5n7 :: Board -> Char -> Position -> Position -> Bool
+isGoodJump_c5n7 board colour jumpPos newPos =
+	(isSame_c5n7 board colour jumpPos) && (isDifferent_c5n7 board colour newPos)
 
-findUpLeft board (Pos row col) 
-	| row > (midRow row board)	= Pos (row - 1) col
-	| otherwise 				= Pos (row - 1) (col - 1)
+findUpLeft_c5n7 board (Pos row col) 
+	| row > (midRow_c5n7 row board)	= Pos (row - 1) col
+	| otherwise 					= Pos (row - 1) (col - 1)
 
-findUpRight board (Pos row col) 
-	| row > (midRow row board)	= Pos (row - 1) (col + 1)
-	| otherwise 				= Pos (row - 1) col
+findUpRight_c5n7 board (Pos row col) 
+	| row > (midRow_c5n7 row board)	= Pos (row - 1) (col + 1)
+	| otherwise 					= Pos (row - 1) col
 	
-findDownLeft board (Pos row col)
-	| row >= (midRow row board)	= Pos (row + 1) (col - 1)
-	| otherwise 				= Pos (row + 1) col
+findDownLeft_c5n7 board (Pos row col)
+	| row >= (midRow_c5n7 row board) = Pos (row + 1) (col - 1)
+	| otherwise 					 = Pos (row + 1) col
 	
-findDownRight board (Pos row col)
-	| row >= (midRow row board)	= Pos (row + 1) col
-	| otherwise 				= Pos (row + 1) (col + 1)
+findDownRight_c5n7 board (Pos row col)
+	| row >= (midRow_c5n7 row board) = Pos (row + 1) col
+	| otherwise 					 = Pos (row + 1) (col + 1)
 		
-midRow row board = head [row | ((Pos row col), _) <- board, col == maxCol]
+midRow_c5n7 row board = head [row | ((Pos row col), _) <- board, col == maxCol]
 	where maxCol = maximum [col |((Pos _ col), _) <- board] 
 
-makeBoards :: Int -> [String] -> [Board]
-makeBoards size lob = [(makeBoard' board size) | board <- lob]
+makeBoards_c5n7 :: Int -> [String] -> [Board]
+makeBoards_c5n7 size lob = [(makeBoard' board size) | board <- lob]
 	where makeBoard' board size = 
-		 (makeBoard (splitIntoRows_c5n7 size board) 1 size)
+		 (makeBoard_c5n7 (splitIntoRows_c5n7 size board) 1 size)
 
-makeHeuristic :: Board -> Char -> Game
-makeHeuristic board side = (board, addScores board side) 
+makeHeuristic_c5n7 :: Board -> Char -> Game
+makeHeuristic_c5n7 board side = (board, addScores_c5n7 board side) 
 
-addScores board side = (winPoints board side) + (piecePoints board side)
-winPoints board side 
-	 | notEnoughPieces board side				= lossValue
-	 | notEnoughPieces board (otherSide side) 	= winValue
-	 | otherwise 								= 0
+addScores_c5n7 board side = (winPoints_c5n7 board side) + (piecePoints_c5n7 board side)
 
-gameEndScore depth = if ((mod depth 2) == 1) then winValue else lossValue
-winValue = 10
-lossValue = -10
+winPoints_c5n7 board side 
+	 | notEnoughPieces_c5n7 board side				= lossValue_c5n7
+	 | notEnoughPieces_c5n7 board (otherSide_c5n7 side) 	= winValue_c5n7
+	 | otherwise 									= 0
 
-piecePoints board side = 
-	(length (getSide side board)) - 
-	(length (getSide (otherSide side) board))
+gameEndScore_c5n7 depth = if ((mod depth 2) == 1) then winValue_c5n7 else lossValue_c5n7
+winValue_c5n7 = 10
+lossValue_c5n7 = -10
 
-makeBoard :: [String] -> Int -> Int -> Board
-makeBoard (str:los) curr size = 
+piecePoints_c5n7 board side = 
+	(length (getSide_c5n7 side board)) - 
+	(length (getSide_c5n7 (otherSide_c5n7 side) board))
+
+makeBoard_c5n7 :: [String] -> Int -> Int -> Board
+makeBoard_c5n7 (str:los) curr size = 
 	if (curr == ((2 * size) - 1)) 
-	then (makeRow str curr 1)
-	else ((makeRow str curr 1) ++ (makeBoard los (curr + 1) size))
+	then (makeRow_c5n7 str curr 1)
+	else ((makeRow_c5n7 str curr 1) ++ (makeBoard_c5n7 los (curr + 1) size))
 
-makeRow :: String -> Int -> Int -> Board
-makeRow [] row col = []
-makeRow (ch: loc) row col = 
-	((Pos row col), (toUpper ch)) : (makeRow loc row (col + 1))
+makeRow_c5n7 :: String -> Int -> Int -> Board
+makeRow_c5n7 [] row col = []
+makeRow_c5n7 (ch: loc) row col = 
+	((Pos row col), (toUpper ch)) : (makeRow_c5n7 loc row (col + 1))
 
-getHr :: Game -> Int
-getHr game = snd game 
+getHr_c5n7 :: Game -> Int
+getHr_c5n7 game = snd game 
 
-addHr :: Game -> Int -> Game
-addHr game value = ((fst game), ((snd game) + value))
+addHr_c5n7 :: Game -> Int -> Game
+addHr_c5n7 game value = ((fst game), ((snd game) + value))
 
-miniMax :: Int -> [Game] -> [Game]
-miniMax depth [] = []
-miniMax depth logame =
+miniMax_c5n7 :: Int -> [Game] -> [Game]
+miniMax_c5n7 depth [] = []
+miniMax_c5n7 depth logame =
 	if ((mod depth 2) == 1) 
 		then [(minimumBy (comparing snd) logame)]
 		else [(maximumBy (comparing snd) logame)]
@@ -258,14 +272,6 @@ splitIntoRows_c5n7 n board
 	= splitHelper_c5n7 board 1 n n
 
 splitHelper_c5n7 :: String -> Int -> Int -> Int -> [String]
---splitHelper_c5n7 board n row_n curr
---	| null board = []
---	| (curr == row_n) && (curr < 2*n - 1)
---		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n + 1) 0)
---	| (curr == 2*n - 1)
---		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n - 1) 0)
---	| otherwise
---		= splitHelper_c5n7 (board) n row_n (curr + 1)
 splitHelper_c5n7 inputString currRow colsInRow size
 	| currRow >= (2 * size - 1) 	= [(take colsInRow inputString)]
 	| currRow < size		
@@ -282,30 +288,30 @@ splitHelper_c5n7 inputString currRow colsInRow size
 									size
 				
 
-withinBoard :: Board -> Position -> Bool
-withinBoard board pos
+withinBoard_c5n7 :: Board -> Position -> Bool
+withinBoard_c5n7 board pos
 	= (elem True [(fst b) == pos | b <- board])
 
-isSame :: Board -> Char -> Position -> Bool
-isSame board side pos = ((getElement board pos) == [side])
+isSame_c5n7 :: Board -> Char -> Position -> Bool
+isSame_c5n7 board side pos = ((getElement_c5n7 board pos) == [side])
 
-isDifferent :: Board -> Char -> Position -> Bool
-isDifferent board side pos 
+isDifferent_c5n7 :: Board -> Char -> Position -> Bool
+isDifferent_c5n7 board side pos 
 	| (toUpper side) == 'W' 	=  elem targetPiece [['B'], ['-']]
 	| (toUpper side) == 'B'		=  elem targetPiece [['W'], ['-']]
 	| otherwise					= False 
-		where targetPiece = getElement board pos
+		where targetPiece = getElement_c5n7 board pos
 
-getElement :: Board -> Position -> [Char]
-getElement board targetPos = 
+getElement_c5n7 :: Board -> Position -> [Char]
+getElement_c5n7 board targetPos = 
 	[char | (pos, char) <- board, pos == targetPos]
 
-isEmpty :: Board -> Position -> Bool
-isEmpty board pos 
+isEmpty_c5n7 :: Board -> Position -> Bool
+isEmpty_c5n7 board pos 
 	= [char | (posToCheck, char) <- board, pos == posToCheck] == ['-']
 
-replaceChars :: Board -> Char -> Position -> Position -> Board
-replaceChars board side from_pos to_pos
+replaceChars_c5n7 :: Board -> Char -> Position -> Position -> Board
+replaceChars_c5n7 board side from_pos to_pos
 	= [(replace' side (pos, char)) | (pos, char) <- board]
 		where replace' side (pos, char)
 				| (pos == from_pos) = (pos, '-')
@@ -313,56 +319,56 @@ replaceChars board side from_pos to_pos
 				| otherwise = (pos, char)
 
 
-testMakeBoards0 = makeBoards 2 ["-wb-wb-"]
-testMakeBoards1 = makeBoards 3 ["www-ww-------bb-bbb"]
-testMakeBoards2 = makeBoards 3 ["www-ww-------bb-bbb", "www-w-w------bb-bbb"]
-testMakeBoards3 = makeBoards 4 ["WW----WB---BB------------------------"]
+testMakeBoards0 = makeBoards_c5n7 2 ["-wb-wb-"]
+testMakeBoards1 = makeBoards_c5n7 3 ["www-ww-------bb-bbb"]
+testMakeBoards2 = makeBoards_c5n7 3 ["www-ww-------bb-bbb", "www-w-w------bb-bbb"]
+testMakeBoards3 = makeBoards_c5n7 4 ["WW----WB---BB------------------------"]
 
 testSplitStrings = splitIntoRows_c5n7 4 "WW----WB---BB------------------------"
 
-testB1 = head (makeBoards 3 ["w------------------"])
-testB2 = head (makeBoards 3 ["-b-----------------"])
-testB3 = head (makeBoards 3 ["----w--------------"])
-testB4 = head (makeBoards 3 ["--------------b----"])
-testB5 = head (makeBoards 3 ["--------------bb---"])
-testB6 = head (makeBoards 3 ["---------b----b----"])
-testB7 = head (makeBoards 3 ["WW-------B---BB-BB-"])
-testB8 = head (makeBoards 3 ["WWW------B---BB-BB-"])
-testB9 = head (makeBoards 3 ["WWWWWWWWWBBBBBBBBBB"])
-testB10 = head (makeBoards 3 ["--W------WW-BWB----"])
-testB11 = head (makeBoards 4 ["WW----WB---BB------------------------"])
+testB1 = head (makeBoards_c5n7 3 ["w------------------"])
+testB2 = head (makeBoards_c5n7 3 ["-b-----------------"])
+testB3 = head (makeBoards_c5n7 3 ["----w--------------"])
+testB4 = head (makeBoards_c5n7 3 ["--------------b----"])
+testB5 = head (makeBoards_c5n7 3 ["--------------bb---"])
+testB6 = head (makeBoards_c5n7 3 ["---------b----b----"])
+testB7 = head (makeBoards_c5n7 3 ["WW-------B---BB-BB-"])
+testB8 = head (makeBoards_c5n7 3 ["WWW------B---BB-BB-"])
+testB9 = head (makeBoards_c5n7 3 ["WWWWWWWWWBBBBBBBBBB"])
+testB10 = head (makeBoards_c5n7 3 ["--W------WW-BWB----"])
+testB11 = head (makeBoards_c5n7 4 ["WW----WB---BB------------------------"])
 
-testGenerateBoards0 = generateBoards (head testMakeBoards1) 'W' 1 []
-testGenerateBoards1 = generateBoards testB7 'W' 1 []
-testGenerateBoards2 = generateBoards testB8 'W' 1 []
-testGenerateBoards3 = generateBoards testB10 'W' 1 []
-testGenerateBoards4 = generateBoards testB11 'W' 1 []
+testGenerateBoards0 = generateBoards_c5n7 (head testMakeBoards1) 'W' 1 []
+testGenerateBoards1 = generateBoards_c5n7 testB7 'W' 1 []
+testGenerateBoards2 = generateBoards_c5n7 testB8 'W' 1 []
+testGenerateBoards3 = generateBoards_c5n7 testB10 'W' 1 []
+testGenerateBoards4 = generateBoards_c5n7 testB11 'W' 1 []
 
-testGenUp0 = generateUps testB1 (Pos 1 1, 'W')
-testGenUp1 = generateUps testB2 (Pos 1 2, 'B')
-testGenUp2 = generateUps testB3 (Pos 2 2, 'W')
-testGenUp3 = generateUps testB4 (Pos 4 3, 'B')
-testGenUp4 = generateUps testB5 (Pos 4 3, 'B')
-testGenUp5 = generateUps testB6 (Pos 4 3, 'B')
-testGenUp6 = generateUps testB11 (Pos 2 3, 'W')
+testGenUp0 = generateUps_c5n7 testB1 (Pos 1 1, 'W')
+testGenUp1 = generateUps_c5n7 testB2 (Pos 1 2, 'B')
+testGenUp2 = generateUps_c5n7 testB3 (Pos 2 2, 'W')
+testGenUp3 = generateUps_c5n7 testB4 (Pos 4 3, 'B')
+testGenUp4 = generateUps_c5n7 testB5 (Pos 4 3, 'B')
+testGenUp5 = generateUps_c5n7 testB6 (Pos 4 3, 'B')
+testGenUp6 = generateUps_c5n7 testB11 (Pos 2 3, 'W')
 
-testGenDown0 = generateDowns testB1 (Pos 1 1, 'W')
-testGenDown1 = generateDowns testB2 (Pos 1 2, 'B')
-testGenDown2 = generateDowns testB3 (Pos 2 2, 'W')
-testGenDown3 = generateDowns testB4 (Pos 4 3, 'B')
-testGenDown4 = generateDowns testB5 (Pos 4 3, 'B')
-testGenDown5 = generateDowns testB6 (Pos 3 3, 'B')
+testGenDown0 = generateDowns_c5n7 testB1 (Pos 1 1, 'W')
+testGenDown1 = generateDowns_c5n7 testB2 (Pos 1 2, 'B')
+testGenDown2 = generateDowns_c5n7 testB3 (Pos 2 2, 'W')
+testGenDown3 = generateDowns_c5n7 testB4 (Pos 4 3, 'B')
+testGenDown4 = generateDowns_c5n7 testB5 (Pos 4 3, 'B')
+testGenDown5 = generateDowns_c5n7 testB6 (Pos 3 3, 'B')
 
-testGenHoriz0 = generateHorizontal testB1 (Pos 1 1, 'W')
-testGenHoriz1 = generateHorizontal testB2 (Pos 1 2, 'B')
-testGenHoriz2 = generateHorizontal testB3 (Pos 2 2, 'W')
-testGenHoriz3 = generateHorizontal testB4 (Pos 4 3, 'B')
-testGenHoriz4 = generateHorizontal testB5 (Pos 4 3, 'B')
-testGenHoriz5 = generateHorizontal testB5 (Pos 4 4, 'B')
+testGenHoriz0 = generateHorizontal_c5n7 testB1 (Pos 1 1, 'W')
+testGenHoriz1 = generateHorizontal_c5n7 testB2 (Pos 1 2, 'B')
+testGenHoriz2 = generateHorizontal_c5n7 testB3 (Pos 2 2, 'W')
+testGenHoriz3 = generateHorizontal_c5n7 testB4 (Pos 4 3, 'B')
+testGenHoriz4 = generateHorizontal_c5n7 testB5 (Pos 4 3, 'B')
+testGenHoriz5 = generateHorizontal_c5n7 testB5 (Pos 4 4, 'B')
 
-testGameOver0 = gameOver testB7 testGenerateBoards1
-testGameOver1 = gameOver testB8 testGenerateBoards2
-testGameOver2 = gameOver testB10 testGenerateBoards3
+testGameOver0 = gameOver_c5n7 testB7 testGenerateBoards1
+testGameOver1 = gameOver_c5n7 testB8 testGenerateBoards2
+testGameOver2 = gameOver_c5n7 testB10 testGenerateBoards3
 
 testCrusher0 = crusher_c5n7 "www-ww-------bb-bbb" 'w' 3 3 []
 testCrusher1 = crusher_c5n7 "www-ww-------bb-bbb" 'b' 3 3 []
@@ -374,90 +380,93 @@ testCrusher5 = crusher_c5n7 (head testCrusher4) 'b' 3 3 (tail testCrusher4)
 testCrusher6 = crusher_c5n7 "--W------WW-BWB----" 'w' 3 3 []
 testCrusher7 = crusher_c5n7 "--W------WW-BWB----" 'b' 3 3 []
 testCrusher8 = crusher_c5n7 "--W--W---WW-BBB----" 'W' 3 3 []
-testCrusher9 = crusherPrint 3 (crusher_c5n7 "WBWBBBB-----BBBBWBW" 'W' 3 3 [])
-testCrusher10 = crusherPrint 3 (crusher_c5n7 "-WW-W--BBB---------" 'W' 3 3 [])
-testCrusher11 = crusherPrint 3 (crusher_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])
-testCrusher12 = crusherPrint 4  
+testCrusher9 = crusherPrint_c5n7 3 (crusher_c5n7 "WBWBBBB-----BBBBWBW" 'W' 3 3 [])
+testCrusher10 = crusherPrint_c5n7 3 (crusher_c5n7 "-WW-W--BBB---------" 'W' 3 3 [])
+testCrusher11 = crusherPrint_c5n7 3 (crusher_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])
+testCrusher12 = crusherPrint_c5n7 4  
 			(crusher_c5n7 "WW----WB---BB------------------------" 'W' 4 4 [])
 
-playCrusher0 = prettyPrint (map (splitIntoRows_c5n7 3) 
-					(playCrusher' "WWWWWWWWWBBBBBBBBBB" 7 'w' []))
-playCrusher1 = prettyPrint (map (splitIntoRows_c5n7 3) 
-					(playCrusher' "www-ww-------bb-bbb" 20 'w' []))
-playCrusher2 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 40 'w' [])
-playCrusher3 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 100 'w' [])
-playCrusher4 = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'w' [])
-playCrusher4a = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'b' [])
-playCrusher5 = crusherPrint 3 (playCrusher' "--W--W---WW-BBB----" 4 'w' [])
-playCrusher6 = crusherPrint 3 (playCrusher' "--W--W---WW-BB-B---" 4 'B' [])
-playCrusher7 = crusherPrint 3 (playCrusher' "--B--B---BB-WWW----" 4 'B' [])
-playCrusher8 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 4 'W' [])
-playCrusher9 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 80 'B' [])
-playCrusher10 = crusherPrint 4 (playCrusher
+playCrusher0 = prettyPrint_c5n7 (map (splitIntoRows_c5n7 3) 
+					(playCrusher'_c5n7 "WWWWWWWWWBBBBBBBBBB" 7 'w' []))
+playCrusher1 = prettyPrint_c5n7 (map (splitIntoRows_c5n7 3) 
+					(playCrusher'_c5n7 "www-ww-------bb-bbb" 20 'w' []))
+playCrusher2 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "www-ww-------bb-bbb" 40 'w' [])
+playCrusher3 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "www-ww-------bb-bbb" 100 'w' [])
+playCrusher4 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "--W------WW-BWB----" 4 'w' [])
+playCrusher4a = crusherPrint_c5n7 3 (playCrusher'_c5n7 "--W------WW-BWB----" 4 'b' [])
+playCrusher5 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "--W--W---WW-BBB----" 4 'w' [])
+playCrusher6 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "--W--W---WW-BB-B---" 4 'B' [])
+playCrusher7 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "--B--B---BB-WWW----" 4 'B' [])
+playCrusher8 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "-WW-W--BBB---------" 4 'W' [])
+playCrusher9 = crusherPrint_c5n7 3 (playCrusher'_c5n7 "-WW-W--BBB---------" 80 'B' [])
+playCrusher10 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 5 'W' 4 [])
-playCrusher11 = crusherPrint 4 (playCrusher
+playCrusher11 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 5 'B' 4 [])
-playCrusher12 = crusherPrint 4 (playCrusher
+playCrusher12 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 4 'W' 4 [])
-playCrusher13 = crusherPrint 4 (playCrusher
+playCrusher13 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 4 'B' 4 [])	
-playCrusher14 = crusherPrint 4 (playCrusher
+playCrusher14 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 1 'B' 4 [])							
-playCrusher15 = crusherPrint 4 (playCrusher
+playCrusher15 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 1 'W' 4 [])
-playCrusher16 = crusherPrint 4 (playCrusher
+playCrusher16 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 2 'B' 4 [])
-playCrusher17 = crusherPrint 4 (playCrusher
+playCrusher17 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 2 'W' 4 [])
-playCrusher18 = crusherPrint 4 (playCrusher
+playCrusher18 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 3 'B' 4 [])
-playCrusher19 = crusherPrint 4 (playCrusher
+playCrusher19 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 10 'B' 4 [])
-						
-						
-playCrusher initBoard numMoves side size history 
-	= playCrusherH initBoard 1 numMoves side size history
+playCrusher20 = crusherPrint_c5n7 3 (playCrusher_c5n7 "-WW-W--BBB---------" 20 'B' 3 [])
 
-playCrusherH initBoard currMove numMoves side size history 
+bestMove0 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'W' 4 3 [])	
+bestMove1 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])					
+						
+playCrusher_c5n7 initBoard numMoves side size history 
+	= playCrusherH_c5n7 initBoard 1 numMoves side size history
+
+playCrusherH_c5n7 initBoard currMove numMoves side size history 
 	| currMove == numMoves	= currentMove
 	| otherwise 			
-		= playCrusherH	(head currentMove) 
+		= playCrusherH_c5n7	(head currentMove) 
 						(currMove + 1) 
 						numMoves 
-						(otherSide side) 
+						(otherSide_c5n7 side) 
 						size 
 						(tail currentMove)
 	where currentMove = crusher_c5n7 initBoard side 3 size history 
 	
-playCrusher' initBoard 1 side history = 
-	crusher_c5n7 initBoard (otherSide side) 4 3 []
-playCrusher' initBoard numMoves side history = 
-	crusher_c5n7 (head result) (otherSide side) 4 3 (tail result)
-	where result = playCrusher' initBoard (numMoves-1) (otherSide side) history
+playCrusher'_c5n7 initBoard 1 side history = 
+	crusher_c5n7 initBoard (otherSide_c5n7 side) 4 3 []
+playCrusher'_c5n7 initBoard numMoves side history = 
+	crusher_c5n7 (head result) (otherSide_c5n7 side) 4 3 (tail result)
+	where result = playCrusher'_c5n7 initBoard (numMoves-1) (otherSide_c5n7 side) history
 
 -- Consumes a list of list of String, lolos, and prints it to the console in 
 -- the format suggested by the assignment for ease of reading. If the solution 
 -- is an empty list, ie the function is passed the empty list, then it prints
 -- "[]". Returns a void IO value.
-prettyPrint :: [[String]] -> IO ()
-prettyPrint [] = putStrLn "[]"
-prettyPrint lolos = mapM_ printStrings lolos
+prettyPrint_c5n7 :: [[String]] -> IO ()
+prettyPrint_c5n7 [] = putStrLn "[]"
+prettyPrint_c5n7 lolos = mapM_ printStrings_c5n7 lolos
 
 -- Consumes a list of String, los, and prints them in the requested format.
 -- Adds [] characters surrounding the los, to indicate a whole board. Returns
 -- a void IO value.
-printStrings :: [String] -> IO ()
-printStrings los = do {putStr (take ((length newString) - 1) newString); 
+printStrings_c5n7 :: [String] -> IO ()
+printStrings_c5n7 los = do {putStr (take ((length newString) - 1) newString); 
 						putStr "\n\n"}
 					where newString = unlines los 
 
 -- Consumes a list of String, los, and an accumulator, acc, and returns a 
 -- formatted list of String. Adds appropriate ' ', '\"', and ',' characters
 -- to the list of Strings to match the suggested output format.
-format :: [String] -> [String] -> [String]	
-format [] acc = acc
-format (s:[]) acc = (acc ++ [(' ' : '\"' : s) ++ "\""])
-format (s:los) [] = format los [('\"' : s) ++ "\","]
-format (s:los) acc = format los (acc ++ [(" \"" ++ s) ++ "\","]) 
+format_c5n7 :: [String] -> [String] -> [String]	
+format_c5n7 [] acc = acc
+format_c5n7 (s:[]) acc = (acc ++ [(' ' : '\"' : s) ++ "\""])
+format_c5n7 (s:los) [] = format_c5n7 los [('\"' : s) ++ "\","]
+format_c5n7 (s:los) acc = format_c5n7 los (acc ++ [(" \"" ++ s) ++ "\","]) 
 
-crusherPrint size n = prettyPrint (map (splitIntoRows_c5n7 size) n)
+crusherPrint_c5n7 size n = prettyPrint_c5n7 (map (splitIntoRows_c5n7 size) n)
