@@ -18,8 +18,6 @@ getBestMove_c5n7 board side depth size history
 		firstMove = (listOfMoves)!!1
 		listOfMoves = reverse (playCrusher_c5n7 board depth side size history)
 
-
-
 ---stuff ends here
 
 crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
@@ -134,63 +132,77 @@ generateHorizontal_c5n7 board piece = (slideLeft_c5n7 board piece) ++
 									(jumpLeft_c5n7 board piece) ++
 									(jumpRight_c5n7 board piece)
 
+doSlide_c5n7 :: Board -> (Position, Piece) -> Position -> [Board]
 doSlide_c5n7 board (pos, colour) newPos	
 	| isEmpty_c5n7 board newPos = 
 		-- isEmpty checks if a location is '-' so also checks if it is on board
 		[(replaceChars_c5n7 board colour pos newPos)]
 	| otherwise	= []
-	
+
+slideUpLeft_c5n7 :: Board -> (Position, Piece) -> [Board]	
 slideUpLeft_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
 		where newPos = (findUpLeft_c5n7 board pos)
-	
+
+slideUpRight_c5n7 :: Board -> (Position, Piece) -> [Board] 	
 slideUpRight_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
 		where newPos = (findUpRight_c5n7 board pos)
 
+doJump_c5n7 :: Board -> (Position, Piece) -> Position -> Position -> [Board] 
 doJump_c5n7 board (pos, colour) jumpPos newPos 
 	| isGoodJump_c5n7 board colour jumpPos newPos
 		= [(replaceChars_c5n7 board colour pos newPos)]
 	| otherwise = []
-		
+
+jumpUpLeft_c5n7 :: Board -> (Position, Piece) -> [Board] 		
 jumpUpLeft_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where
 			jumpPos = findUpLeft_c5n7 board pos 
 			newPos = findUpLeft_c5n7 board jumpPos
 
+jumpUpRight_c5n7 :: Board -> (Position, Piece) -> [Board] 
 jumpUpRight_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 
 			jumpPos = findUpRight_c5n7 board pos 
 			newPos = findUpRight_c5n7 board jumpPos
 
+slideDownLeft_c5n7 :: Board -> (Position, Piece) -> [Board] 
 slideDownLeft_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
 		where newPos = (findDownLeft_c5n7 board pos)
 	
+slideDownRight_c5n7 :: Board -> (Position, Piece) -> [Board] 
 slideDownRight_c5n7 board (pos, colour) = doSlide_c5n7 board (pos, colour) newPos
 		where newPos = (findDownRight_c5n7 board pos)
-	
+
+jumpDownLeft_c5n7 :: Board -> (Position, Piece) -> [Board] 
 jumpDownLeft_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 	
 			jumpPos = findDownLeft_c5n7 board pos
 			newPos = findDownLeft_c5n7 board jumpPos
 
+jumpDownRight_c5n7 :: Board -> (Position, Piece) -> [Board] 
 jumpDownRight_c5n7 board (pos, colour) = doJump_c5n7 board (pos, colour) jumpPos newPos 
 		where 	
 			jumpPos = findDownRight_c5n7 board pos 
 			newPos = findDownRight_c5n7 board jumpPos
-			
+
+slideLeft_c5n7 :: Board -> (Position, Piece) -> [Board] 			
 slideLeft_c5n7 board (Pos row col, colour) = 
 	doSlide_c5n7 board (Pos row col, colour) newPos
 		where newPos = (Pos row (col - 1))
-					
+	
+slideRight_c5n7 :: Board -> (Position, Piece) -> [Board] 				
 slideRight_c5n7 board (Pos row col, colour) =
 	doSlide_c5n7 board (Pos row col, colour) newPos
 		where newPos = (Pos row (col + 1))
 
+jumpLeft_c5n7 :: Board -> (Position, Piece) -> [Board] 
 jumpLeft_c5n7 board (Pos row col, colour) = 
 	doJump_c5n7 board (Pos row col, colour) jumpPos newPos 
 		where 	
 			jumpPos = Pos row (col - 1) 
 			newPos = Pos row (col - 2)
 
+jumpRight_c5n7 :: Board -> (Position, Piece) -> [Board] 
 jumpRight_c5n7 board (Pos row col, colour) = 
 	doJump_c5n7 board (Pos row col, colour) jumpPos newPos 
 		where 	
@@ -201,22 +213,27 @@ isGoodJump_c5n7 :: Board -> Char -> Position -> Position -> Bool
 isGoodJump_c5n7 board colour jumpPos newPos =
 	(isSame_c5n7 board colour jumpPos) && (isDifferent_c5n7 board colour newPos)
 
+findUpLeft_c5n7 :: Board -> Position -> Position
 findUpLeft_c5n7 board (Pos row col) 
 	| row > (midRow_c5n7 row board)	= Pos (row - 1) col
 	| otherwise 					= Pos (row - 1) (col - 1)
 
+findUpRight_c5n7 :: Board -> Position -> Position
 findUpRight_c5n7 board (Pos row col) 
 	| row > (midRow_c5n7 row board)	= Pos (row - 1) (col + 1)
 	| otherwise 					= Pos (row - 1) col
-	
+
+findDownLeft_c5n7 :: Board -> Position -> Position	
 findDownLeft_c5n7 board (Pos row col)
 	| row >= (midRow_c5n7 row board) = Pos (row + 1) (col - 1)
 	| otherwise 					 = Pos (row + 1) col
-	
+
+findDownRight_c5n7 :: Board -> Position -> Position	
 findDownRight_c5n7 board (Pos row col)
 	| row >= (midRow_c5n7 row board) = Pos (row + 1) col
 	| otherwise 					 = Pos (row + 1) (col + 1)
-		
+
+midRow_c5n7 :: Int -> Board -> Int		
 midRow_c5n7 row board = head [row | ((Pos row col), _) <- board, col == maxCol]
 	where maxCol = maximum [col |((Pos _ col), _) <- board] 
 
@@ -228,17 +245,21 @@ makeBoards_c5n7 size lob = [(makeBoard' board size) | board <- lob]
 makeHeuristic_c5n7 :: Board -> Char -> Game
 makeHeuristic_c5n7 board side = (board, addScores_c5n7 board side) 
 
+addScores_c5n7 :: Board -> Char -> Int
 addScores_c5n7 board side = (winPoints_c5n7 board side) + (piecePoints_c5n7 board side)
 
+winPoints_c5n7 :: Board -> Char -> Int
 winPoints_c5n7 board side 
 	 | notEnoughPieces_c5n7 board side				= lossValue_c5n7
 	 | notEnoughPieces_c5n7 board (otherSide_c5n7 side) 	= winValue_c5n7
 	 | otherwise 									= 0
 
+gameEndScore_c5n7 :: Int -> Int
 gameEndScore_c5n7 depth = if ((mod depth 2) == 1) then winValue_c5n7 else lossValue_c5n7
 winValue_c5n7 = 10
 lossValue_c5n7 = -10
 
+piecePoints_c5n7 :: Board -> Char -> Int
 piecePoints_c5n7 board side = 
 	(length (getSide_c5n7 side board)) - 
 	(length (getSide_c5n7 (otherSide_c5n7 side) board))
@@ -423,10 +444,12 @@ playCrusher20 = crusherPrint_c5n7 3 (playCrusher_c5n7 "-WW-W--BBB---------" 20 '
 
 bestMove0 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'W' 4 3 [])	
 bestMove1 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])					
-						
+
+playCrusher_c5n7 :: String -> Int -> Char -> Int -> [String] -> [String]						
 playCrusher_c5n7 initBoard numMoves side size history 
 	= playCrusherH_c5n7 initBoard 1 numMoves side size history
 
+playCrusherH_c5n7 :: String -> Int -> Int -> Char -> Int -> [String] -> [String]
 playCrusherH_c5n7 initBoard currMove numMoves side size history 
 	| currMove == numMoves	= currentMove
 	| otherwise 			
@@ -437,7 +460,8 @@ playCrusherH_c5n7 initBoard currMove numMoves side size history
 						size 
 						(tail currentMove)
 	where currentMove = crusher_c5n7 initBoard side 3 size history 
-	
+
+playCrusher'_c5n7 :: String -> Int -> Char -> String -> [String]	
 playCrusher'_c5n7 initBoard 1 side history = 
 	crusher_c5n7 initBoard (otherSide_c5n7 side) 4 3 []
 playCrusher'_c5n7 initBoard numMoves side history = 
@@ -469,4 +493,8 @@ format_c5n7 (s:[]) acc = (acc ++ [(' ' : '\"' : s) ++ "\""])
 format_c5n7 (s:los) [] = format_c5n7 los [('\"' : s) ++ "\","]
 format_c5n7 (s:los) acc = format_c5n7 los (acc ++ [(" \"" ++ s) ++ "\","]) 
 
+crusherPrint_c5n7 :: Int -> [String] -> IO ()
 crusherPrint_c5n7 size n = prettyPrint_c5n7 (map (splitIntoRows_c5n7 size) n)
+
+
+
