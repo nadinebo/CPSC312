@@ -15,6 +15,7 @@ crusher_c5n7 board side depth size history =
 		(fst (crusher'
 				(head (makeBoards size [board]))  
 				(toUpper side) 
+				0 
 				depth 
 				(makeBoards size history)
 				True))) : (board : history)
@@ -44,26 +45,26 @@ getMax board = maximum [n | (Pos m n, char) <- board]
 getString :: Board -> Int -> String
 getString board row = [char | (Pos m n, char) <- (sort board), m == row]
 									
-crusher' :: Board -> Char -> Int -> [Board] -> Bool -> Game
-crusher' board side 0 _ _ = makeHeuristic board side
-crusher' board side depth history isFirst
-	| gameOver board boardList	= addHr game (gameEndScore depth)
-	| not isFirst 				= 
-		addHr game (getHr (head nextGame))
-	| otherwise 				= 
-		if null nextGame then game else (head nextGame)
+crusher' :: Board -> Char -> Int -> Int -> [Board] -> Bool -> Game
+crusher' board side currDepth depth history isFirst
+	| currDepth == depth 		= game
+	| gameOver board boardList	= addHr game (gameEndScore currDepth)
+	| not isFirst 
+		= addHr game (getHr (head nextGame))
+	| otherwise 
+	= if null nextGame then game else (head nextGame)
 	where 
 		game = makeHeuristic board side
 		evaluatedBoards = 
-			evaluateBoards	boardList side depth history
-		boardList = generateBoards board side depth history
-		nextGame = miniMax depth evaluatedBoards
+			evaluateBoards boardList side currDepth depth history
+		boardList = generateBoards board side currDepth history
+		nextGame = miniMax currDepth evaluatedBoards
 
-evaluateBoards :: [Board] -> Char -> Int -> [Board] -> [Game] 
-evaluateBoards [] _ _ _ = []
-evaluateBoards boardList side depth history = 
-	(crusher' (head boardList) side (depth - 1) history False) :
-		   (evaluateBoards (tail boardList) side depth history)
+evaluateBoards :: [Board] -> Char -> Int -> Int -> [Board] -> [Game] 
+evaluateBoards [] _ _ _ _ = []
+evaluateBoards boardList side currDepth depth history = 
+	(crusher' (head boardList) side (currDepth + 1) depth history False) :
+		   (evaluateBoards (tail boardList) side currDepth depth history)
 
 gameOver :: Board -> [Board] -> Bool		   
 gameOver board [] = True 
@@ -79,7 +80,7 @@ getSize board = length [col | (Pos row col, _) <- board, row == 1]
 generateBoards :: Board -> Char -> Int -> [Board] -> [Board]
 generateBoards board side depth history 
 	= (generateBoards' board history (getSide currMove board))
-	where currMove = if ((mod depth 2) == 0) then (otherSide side) else side
+	where currMove = if ((mod depth 2) == 1) then (otherSide side) else side
 	
 otherSide :: Char -> Char
 otherSide side = if (side == 'w' || side == 'W') then 'B' else 'W'
@@ -209,7 +210,7 @@ midRow row board = head [row | ((Pos row col), _) <- board, col == maxCol]
 makeBoards :: Int -> [String] -> [Board]
 makeBoards size lob = [(makeBoard' board size) | board <- lob]
 	where makeBoard' board size = 
-		 (makeBoard (splitIntoRows_c5n7 board size) 1 size)
+		 (makeBoard (splitIntoRows_c5n7 size board) 1 size)
 
 makeHeuristic :: Board -> Char -> Game
 makeHeuristic board side = (board, addScores board side) 
@@ -220,7 +221,7 @@ winPoints board side
 	 | notEnoughPieces board (otherSide side) 	= winValue
 	 | otherwise 								= 0
 
-gameEndScore depth = if ((mod depth 2) == 0) then winValue else lossValue
+gameEndScore depth = if ((mod depth 2) == 1) then winValue else lossValue
 winValue = 10
 lossValue = -10
 
@@ -248,23 +249,38 @@ addHr game value = ((fst game), ((snd game) + value))
 miniMax :: Int -> [Game] -> [Game]
 miniMax depth [] = []
 miniMax depth logame =
-	if ((mod depth 2) == 0) 
+	if ((mod depth 2) == 1) 
 		then [(minimumBy (comparing snd) logame)]
 		else [(maximumBy (comparing snd) logame)]
 
-splitIntoRows_c5n7 :: String -> Int -> [String]
-splitIntoRows_c5n7 board n
-	= splitHelper_c5n7 board n n 0
+splitIntoRows_c5n7 :: Int -> String -> [String]
+splitIntoRows_c5n7 n board 
+	= splitHelper_c5n7 board 1 n n
 
 splitHelper_c5n7 :: String -> Int -> Int -> Int -> [String]
-splitHelper_c5n7 board n row_n curr
-	| null board = []
-	| (curr == row_n) && (curr /= 2*n - 1)
-		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n + 1) 0)
-	| (curr == 2*n - 1)
-		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n - 1) 0)
-	| otherwise
-		= splitHelper_c5n7 (board) n row_n (curr + 1)
+--splitHelper_c5n7 board n row_n curr
+--	| null board = []
+--	| (curr == row_n) && (curr < 2*n - 1)
+--		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n + 1) 0)
+--	| (curr == 2*n - 1)
+--		= (take curr board) : (splitHelper_c5n7 (drop curr board) n (row_n - 1) 0)
+--	| otherwise
+--		= splitHelper_c5n7 (board) n row_n (curr + 1)
+splitHelper_c5n7 inputString currRow colsInRow size
+	| currRow >= (2 * size - 1) 	= [(take colsInRow inputString)]
+	| currRow < size		
+		= (take colsInRow inputString) : 
+				splitHelper_c5n7 	(drop colsInRow inputString) 
+									(currRow + 1)
+									(colsInRow + 1)
+									size
+	| otherwise					
+		= (take colsInRow inputString) : 
+				splitHelper_c5n7 	(drop colsInRow inputString) 
+									(currRow + 1)
+									(colsInRow - 1)
+									size
+				
 
 withinBoard :: Board -> Position -> Bool
 withinBoard board pos
@@ -300,6 +316,9 @@ replaceChars board side from_pos to_pos
 testMakeBoards0 = makeBoards 2 ["-wb-wb-"]
 testMakeBoards1 = makeBoards 3 ["www-ww-------bb-bbb"]
 testMakeBoards2 = makeBoards 3 ["www-ww-------bb-bbb", "www-w-w------bb-bbb"]
+testMakeBoards3 = makeBoards 4 ["WW----WB---BB------------------------"]
+
+testSplitStrings = splitIntoRows_c5n7 4 "WW----WB---BB------------------------"
 
 testB1 = head (makeBoards 3 ["w------------------"])
 testB2 = head (makeBoards 3 ["-b-----------------"])
@@ -311,11 +330,13 @@ testB7 = head (makeBoards 3 ["WW-------B---BB-BB-"])
 testB8 = head (makeBoards 3 ["WWW------B---BB-BB-"])
 testB9 = head (makeBoards 3 ["WWWWWWWWWBBBBBBBBBB"])
 testB10 = head (makeBoards 3 ["--W------WW-BWB----"])
+testB11 = head (makeBoards 4 ["WW----WB---BB------------------------"])
 
 testGenerateBoards0 = generateBoards (head testMakeBoards1) 'W' 1 []
 testGenerateBoards1 = generateBoards testB7 'W' 1 []
 testGenerateBoards2 = generateBoards testB8 'W' 1 []
 testGenerateBoards3 = generateBoards testB10 'W' 1 []
+testGenerateBoards4 = generateBoards testB11 'W' 1 []
 
 testGenUp0 = generateUps testB1 (Pos 1 1, 'W')
 testGenUp1 = generateUps testB2 (Pos 1 2, 'B')
@@ -323,6 +344,7 @@ testGenUp2 = generateUps testB3 (Pos 2 2, 'W')
 testGenUp3 = generateUps testB4 (Pos 4 3, 'B')
 testGenUp4 = generateUps testB5 (Pos 4 3, 'B')
 testGenUp5 = generateUps testB6 (Pos 4 3, 'B')
+testGenUp6 = generateUps testB11 (Pos 2 3, 'W')
 
 testGenDown0 = generateDowns testB1 (Pos 1 1, 'W')
 testGenDown1 = generateDowns testB2 (Pos 1 2, 'B')
@@ -351,21 +373,89 @@ testCrusher4 = crusher_c5n7 "WWWWWWWWWBBBBBBBBBB" 'w' 3 3 []
 testCrusher5 = crusher_c5n7 (head testCrusher4) 'b' 3 3 (tail testCrusher4)
 testCrusher6 = crusher_c5n7 "--W------WW-BWB----" 'w' 3 3 []
 testCrusher7 = crusher_c5n7 "--W------WW-BWB----" 'b' 3 3 []
+testCrusher8 = crusher_c5n7 "--W--W---WW-BBB----" 'W' 3 3 []
+testCrusher9 = crusherPrint 3 (crusher_c5n7 "WBWBBBB-----BBBBWBW" 'W' 3 3 [])
+testCrusher10 = crusherPrint 3 (crusher_c5n7 "-WW-W--BBB---------" 'W' 3 3 [])
+testCrusher11 = crusherPrint 3 (crusher_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])
+testCrusher12 = crusherPrint 4  
+			(crusher_c5n7 "WW----WB---BB------------------------" 'W' 4 4 [])
 
-playCrusher0 = playCrusher' "WWWWWWWWWBBBBBBBBBB" 7 'w' []
-playCrusher1 = playCrusher' "www-ww-------bb-bbb" 20 'w' []
-playCrusher2 = playCrusher' "www-ww-------bb-bbb" 40 'w' []
-playCrusher3 = playCrusher' "www-ww-------bb-bbb" 100 'w' []
-playCrusher4 = playCrusher' "--W------WW-BWB----" 4 'w' []
-playCrusher4a = playCrusher' "--W------WW-BWB----" 4 'b' []
-playCrusher5 = playCrusher' "--W--W---WW-BBB----" 4 'w' []
-playCrusher6 = playCrusher' "--W--W---WW-BB-B---" 4 'B' []
+playCrusher0 = prettyPrint (map (splitIntoRows_c5n7 3) 
+					(playCrusher' "WWWWWWWWWBBBBBBBBBB" 7 'w' []))
+playCrusher1 = prettyPrint (map (splitIntoRows_c5n7 3) 
+					(playCrusher' "www-ww-------bb-bbb" 20 'w' []))
+playCrusher2 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 40 'w' [])
+playCrusher3 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 100 'w' [])
+playCrusher4 = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'w' [])
+playCrusher4a = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'b' [])
+playCrusher5 = crusherPrint 3 (playCrusher' "--W--W---WW-BBB----" 4 'w' [])
+playCrusher6 = crusherPrint 3 (playCrusher' "--W--W---WW-BB-B---" 4 'B' [])
+playCrusher7 = crusherPrint 3 (playCrusher' "--B--B---BB-WWW----" 4 'B' [])
+playCrusher8 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 4 'W' [])
+playCrusher9 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 80 'B' [])
+playCrusher10 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 5 'W' 4 [])
+playCrusher11 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 5 'B' 4 [])
+playCrusher12 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 4 'W' 4 [])
+
+playCrusher13 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 4 'B' 4 [])						
 
 
-playCrusher' initBoard 1 side history = crusher_c5n7 initBoard side 3 3 []
+playCrusher initBoard numMoves side size history 
+	| (mod numMoves 2) == 0 	
+		= playCrusherEven initBoard numMoves (otherSide side) size history
+	| otherwise = playCrusherOdd initBoard numMoves side size history
+
+playCrusherOdd initBoard 1 side size history = 
+	crusher_c5n7 initBoard side 3 size []
+playCrusherOdd initBoard numMoves side size history =
+	crusher_c5n7 (head result) side 3 size (tail result)
+	where 
+		result = playCrusherOdd initBoard (numMoves - 1) (otherSide side) size history
+
+playCrusherEven initBoard 1 side size history = 
+	crusher_c5n7 initBoard (otherSide side) 3 size []
+playCrusherEven initBoard numMoves side size history =
+	crusher_c5n7 (head result) side 3 size (tail result)
+	where 
+		result = playCrusherEven initBoard (numMoves - 1) (otherSide side) size history
+
+	
+playCrusher' initBoard 1 side history = 
+	crusher_c5n7 initBoard (otherSide side) 4 3 []
 playCrusher' initBoard numMoves side history = 
-	crusher_c5n7 (head result) (otherSide side) 3 3 (tail result)
+	crusher_c5n7 (head result) (otherSide side) 4 3 (tail result)
 	where result = playCrusher' initBoard (numMoves-1) (otherSide side) history
 
 --crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
 --generateUps :: Board -> (Position, Piece) -> [Board]
+
+-- Consumes a list of list of String, lolos, and prints it to the console in 
+-- the format suggested by the assignment for ease of reading. If the solution 
+-- is an empty list, ie the function is passed the empty list, then it prints
+-- "[]". Returns a void IO value.
+prettyPrint :: [[String]] -> IO ()
+prettyPrint [] = putStrLn "[]"
+prettyPrint lolos = mapM_ printStrings lolos
+
+-- Consumes a list of String, los, and prints them in the requested format.
+-- Adds [] characters surrounding the los, to indicate a whole board. Returns
+-- a void IO value.
+printStrings :: [String] -> IO ()
+printStrings los = do {putStr (take ((length newString) - 1) newString); 
+						putStr "\n\n"}
+					where newString = unlines los 
+
+-- Consumes a list of String, los, and an accumulator, acc, and returns a 
+-- formatted list of String. Adds appropriate ' ', '\"', and ',' characters
+-- to the list of Strings to match the suggested output format.
+format :: [String] -> [String] -> [String]	
+format [] acc = acc
+format (s:[]) acc = (acc ++ [(' ' : '\"' : s) ++ "\""])
+format (s:los) [] = format los [('\"' : s) ++ "\","]
+format (s:los) acc = format los (acc ++ [(" \"" ++ s) ++ "\","]) 
+
+crusherPrint size n = prettyPrint (map (splitIntoRows_c5n7 size) n)
