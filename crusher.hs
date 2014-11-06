@@ -399,30 +399,39 @@ playCrusher11 = crusherPrint 4 (playCrusher
 						"WW----WBW--BBB-----------------------" 5 'B' 4 [])
 playCrusher12 = crusherPrint 4 (playCrusher
 						"WW----WBW--BBB-----------------------" 4 'W' 4 [])
-
 playCrusher13 = crusherPrint 4 (playCrusher
-						"WW----WBW--BBB-----------------------" 4 'B' 4 [])						
-
-
+						"WW----WBW--BBB-----------------------" 4 'B' 4 [])	
+playCrusher14 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 1 'B' 4 [])							
+playCrusher15 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 1 'W' 4 [])
+playCrusher16 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 2 'B' 4 [])
+playCrusher17 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 2 'W' 4 [])
+playCrusher18 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 3 'B' 4 [])
+playCrusher19 = crusherPrint 4 (playCrusher
+						"WW----WBW--BBB-----------------------" 10 'B' 4 [])
+						
+						
 playCrusher initBoard numMoves side size history 
-	| (mod numMoves 2) == 0 	
-		= playCrusherEven initBoard numMoves (otherSide side) size history
-	| otherwise = playCrusherOdd initBoard numMoves side size history
+	= playCrusherH initBoard 1 numMoves side size history
+	
+--	| (mod numMoves 2) == 0 	
+--		= playCrusherH initBoard 1 numMoves (otherSide side) size history
+--	| otherwise = playCrusherOdd initBoard numMoves side size history
 
-playCrusherOdd initBoard 1 side size history = 
-	crusher_c5n7 initBoard side 3 size []
-playCrusherOdd initBoard numMoves side size history =
-	crusher_c5n7 (head result) side 3 size (tail result)
-	where 
-		result = playCrusherOdd initBoard (numMoves - 1) (otherSide side) size history
-
-playCrusherEven initBoard 1 side size history = 
-	crusher_c5n7 initBoard (otherSide side) 3 size []
-playCrusherEven initBoard numMoves side size history =
-	crusher_c5n7 (head result) side 3 size (tail result)
-	where 
-		result = playCrusherEven initBoard (numMoves - 1) (otherSide side) size history
-
+playCrusherH initBoard currMove numMoves side size history 
+	| currMove == numMoves	= currentMove
+	| otherwise 			
+		= playCrusherH	(head currentMove) 
+						(currMove + 1) 
+						numMoves 
+						(otherSide side) 
+						size 
+						(tail currentMove)
+	where currentMove = crusher_c5n7 initBoard side 3 size history 
 	
 playCrusher' initBoard 1 side history = 
 	crusher_c5n7 initBoard (otherSide side) 4 3 []
