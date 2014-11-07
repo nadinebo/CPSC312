@@ -54,14 +54,14 @@ crusher'_c5n7 board side currDepth depth history
 	where 
 		game = makeHeuristic_c5n7 side board
 		nextGame = miniMax_c5n7 currDepth evaluatedChildren
-		evaluatedChildren = runCrusherOnEach 	generatedBoards 
+		evaluatedChildren = runCrusherOnEach_c5n7 	generatedBoards 
 												side 
 												(currDepth + 1) 
 												depth 
 												(board:history)
 		generatedBoards = generateBoards_c5n7 board side currDepth history
 
-runCrusherOnEach_c5n7 :: [Board] -> Char -> Int -> Int -> [Board] -> (Game, Int)
+runCrusherOnEach_c5n7 :: [Board] -> Char -> Int -> Int -> [Board] -> [(Game, Int)]
 runCrusherOnEach_c5n7 [] _ _ _ _ = []
 runCrusherOnEach_c5n7 (board:boards) side currDepth depth history =
 	(crusher'_c5n7 board side currDepth depth history) :
@@ -272,12 +272,6 @@ makeRow_c5n7 [] row col = []
 makeRow_c5n7 (ch: loc) row col = 
 	((Pos row col), (toUpper ch)) : (makeRow_c5n7 loc row (col + 1))
 
-getHr_c5n7 :: Game -> Int
-getHr_c5n7 game = snd game 
-
-addHr_c5n7 :: Game -> Int -> Game
-addHr_c5n7 game value = ((fst game), ((snd game) + value))
-
 miniMax_c5n7 :: Int -> [(Game, Int)] -> (Game, Int)
 miniMax_c5n7 depth logame =
 	if ((mod depth 2) == 1) 
@@ -308,11 +302,6 @@ splitHelper_c5n7 inputString currRow colsInRow size
 									(currRow + 1)
 									(colsInRow - 1)
 									size
-				
-
-withinBoard_c5n7 :: Board -> Position -> Bool
-withinBoard_c5n7 board pos
-	= (elem True [(fst b) == pos | b <- board])
 
 isSame_c5n7 :: Board -> Char -> Position -> Bool
 isSame_c5n7 board side pos = ((getElement_c5n7 board pos) == [side])
@@ -340,7 +329,7 @@ replaceChars_c5n7 board side from_pos to_pos
 				| (pos == to_pos) = (pos, side)
 				| otherwise = (pos, char)
 
-
+-- TESTS -----------------------------------------------------------------------
 testMakeBoards0 = makeBoards_c5n7 2 ["-wb-wb-"]
 testMakeBoards1 = makeBoards_c5n7 3 ["www-ww-------bb-bbb"]
 testMakeBoards2 = makeBoards_c5n7 3 ["www-ww-------bb-bbb", "www-w-w------bb-bbb"]
@@ -368,8 +357,8 @@ testGenerateBoards3 = generateBoards_c5n7 testB10 'W' 1 []
 testGenerateBoards4 = generateBoards_c5n7 testB11 'W' 1 []
 testGenerateBoards5 = generateBoards_c5n7 testB12 'W' 1 []
 
-testCrushOnEach0 = runCrusherOnEach testGenerateBoards5 'B' 1 3 [testB12]
-testCrushOnEach1 = runCrusherOnEach testGenerateBoards5 'B' 1 4 [testB12]
+testCrushOnEach0 = runCrusherOnEach_c5n7 testGenerateBoards5 'B' 1 3 [testB12]
+testCrushOnEach1 = runCrusherOnEach_c5n7 testGenerateBoards5 'B' 1 4 [testB12]
 board1 = 	[(Pos 1 1,'W'),(Pos 1 2,'W'),(Pos 1 3,'-'),
 		(Pos 2 1,'-'),(Pos 2 2,'B'),(Pos 2 3,'B'),(Pos 2 4,'-'),
 	(Pos 3 1,'-'),(Pos 3 2,'B'),(Pos 3 3,'B'),(Pos 3 4,'-'),(Pos 3 5,'-'),
@@ -406,10 +395,7 @@ testGameOver0 = gameOver_c5n7 testB7 testGenerateBoards1
 testGameOver1 = gameOver_c5n7 testB8 testGenerateBoards2
 testGameOver2 = gameOver_c5n7 testB10 testGenerateBoards3
 
---testMiniMax0 = miniMax_c5n7 0 (map (makeHeuristic_c5n7 'B') testGenerateBoards5) 
-
 testMakeHr0 = map snd (map (makeHeuristic_c5n7 'B') testGenerateBoards5)
-
 
 testCrusher14 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 1 3)
 testCrusher15 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 3 3)
@@ -473,6 +459,7 @@ playCrusher20 = crusherPrint_c5n7 4 (playCrusher_c5n7
 playCrusher21 = crusherPrint_c5n7 4 (playCrusher_c5n7 
 						"wwww-www---ww-----------bb---bbb-bbbb" 10 'w' 4 [])				
 
+--------------- GAME PLAYING FUNCTIONS FOR TESTING -----------------------------
 playCrusher_c5n7 :: String -> Int -> Char -> Int -> [String] -> [String]						
 playCrusher_c5n7 initBoard numMoves side size history 
 	= playCrusherH_c5n7 initBoard 1 numMoves side size history
@@ -488,6 +475,8 @@ playCrusherH_c5n7 initBoard currMove numMoves side size history
 						size 
 						(tail currentMove)
 	where currentMove = crusher_c5n7 (initBoard:history) side 3 size
+
+--------- HOMEMADE PRETTY PRINTS ----------------------------------------------
 
 -- Consumes a list of list of String, lolos, and prints it to the console in 
 -- the format suggested by the assignment for ease of reading. If the solution 
