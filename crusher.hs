@@ -20,15 +20,15 @@ getBestMove_c5n7 board side depth size history
 
 ---stuff ends here
 
-crusher_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
-crusher_c5n7 board side depth size history = 
+crusher_c5n7 :: [String] -> Char -> Int -> Int -> [String]
+crusher_c5n7 (board:history) side depth size = 
 	(toString_c5n7 
-		(fst (crusher'_c5n7
+		(fst (fst (crusher'_c5n7
 				(head (makeBoards_c5n7 size [board]))  
 				(toUpper side) 
 				0 
 				depth 
-				(makeBoards_c5n7 size history)))) : (board : history)
+				(makeBoards_c5n7 size history))))) : (board : history)
 
 -- Consumes a board and converts it to a list of String.
 toString_c5n7 :: Board -> String
@@ -55,13 +55,13 @@ getMax_c5n7 board = maximum [n | (Pos m n, char) <- board]
 getString_c5n7 :: Board -> Int -> String
 getString_c5n7 board row = [char | (Pos m n, char) <- (sort board), m == row]
 									
-crusher'_c5n7 :: Board -> Char -> Int -> Int -> [Board] -> Game
+crusher'_c5n7 :: Board -> Char -> Int -> Int -> [Board] -> (Game, Int)
 crusher'_c5n7 board side currDepth depth history
-	| currDepth == depth	= game
+	| currDepth == depth	= (game, depth)
 	| gameOver_c5n7 board generatedBoards
-							= (board, (gameEndScore_c5n7 currDepth))
+							= ((board, (gameEndScore_c5n7 currDepth)), 0)
 	| currDepth == 0		= miniMax_c5n7 currDepth evaluatedChildren
-	| otherwise 			= (board, (snd nextGame))
+	| otherwise 			= ((board, (snd (fst nextGame))), (snd nextGame) + 1)
 	where 
 		game = makeHeuristic_c5n7 side board
 		nextGame = miniMax_c5n7 currDepth evaluatedChildren
@@ -248,7 +248,10 @@ makeHeuristic_c5n7 :: Char -> Board -> Game
 makeHeuristic_c5n7 side board = (board, addScores_c5n7 board side) 
 
 addScores_c5n7 :: Board -> Char -> Int
-addScores_c5n7 board side = (winPoints_c5n7 board side) + (piecePoints_c5n7 board side)
+addScores_c5n7 board side 
+	| win /= 0		= win
+	| otherwise		= piecePoints_c5n7 board side
+	where win = (winPoints_c5n7 board side)
 
 winPoints_c5n7 :: Board -> Char -> Int
 winPoints_c5n7 board side 
@@ -258,8 +261,8 @@ winPoints_c5n7 board side
 
 gameEndScore_c5n7 :: Int -> Int
 gameEndScore_c5n7 depth = if ((mod depth 2) == 1) 
-							then winValue_c5n7 * 10 
-							else lossValue_c5n7 * 10
+							then winValue_c5n7 
+							else lossValue_c5n7
 winValue_c5n7 = 10
 lossValue_c5n7 = -10
 
@@ -285,12 +288,16 @@ getHr_c5n7 game = snd game
 addHr_c5n7 :: Game -> Int -> Game
 addHr_c5n7 game value = ((fst game), ((snd game) + value))
 
-miniMax_c5n7 :: Int -> [Game] -> Game
--- miniMax_c5n7 depth [] = []  -- This shoudln't ever happen
+miniMax_c5n7 :: Int -> [(Game, Int)] -> (Game, Int)
 miniMax_c5n7 depth logame =
 	if ((mod depth 2) == 1) 
-		then (minimumBy (comparing snd) logame)
-		else (maximumBy (comparing snd) logame)
+		then minimumBy (comparing snd) allMins
+		else minimumBy (comparing snd) allMaxes
+	where
+		minHr = snd (minimumBy (comparing snd) (map fst logame))
+		allMins = [(game, moves)|(game, moves) <- logame, (snd game) == minHr]
+		maxHr = snd (maximumBy (comparing snd) (map fst logame))
+		allMaxes = [(game, moves)|(game, moves) <- logame, (snd game) == maxHr]
 
 splitIntoRows_c5n7 :: Int -> String -> [String]
 splitIntoRows_c5n7 n board 
@@ -372,11 +379,16 @@ testGenerateBoards4 = generateBoards_c5n7 testB11 'W' 1 []
 testGenerateBoards5 = generateBoards_c5n7 testB12 'W' 1 []
 
 testCrushOnEach0 = runCrusherOnEach testGenerateBoards5 'B' 1 3 [testB12]
-board1 = [(Pos 1 1,'W'),(Pos 1 2,'W'),(Pos 1 3,'-'),(Pos 2 1,'-'),(Pos 2 2,'B'),(Pos 2 3,'B'),(Pos 2 4,'-'),(Pos 3 1,'-'),(Pos 3 2,'B'),(Pos 3 3,'B'),(Pos 3 4,'-'),(Pos 3 5,'-'),(Pos 4 1,'-'),(Pos 4 2,'-'),(Pos 4 3,'B'),(Pos 4 4,'-'),(Pos 5 1,'-'),(Pos 5 2,'W'),(Pos 5 3,'-')]
+testCrushOnEach1 = runCrusherOnEach testGenerateBoards5 'B' 1 4 [testB12]
+board1 = 	[(Pos 1 1,'W'),(Pos 1 2,'W'),(Pos 1 3,'-'),
+		(Pos 2 1,'-'),(Pos 2 2,'B'),(Pos 2 3,'B'),(Pos 2 4,'-'),
+	(Pos 3 1,'-'),(Pos 3 2,'B'),(Pos 3 3,'B'),(Pos 3 4,'-'),(Pos 3 5,'-'),
+		(Pos 4 1,'-'),(Pos 4 2,'-'),(Pos 4 3,'B'),(Pos 4 4,'-'),
+			(Pos 5 1,'-'),(Pos 5 2,'W'),(Pos 5 3,'-')]
 testCrusher01 = crusher'_c5n7 board1 'B' 1 3 [testB12]
-testCrusher02 = crusher'_c5n7 (fst testCrusher01) 'B' 2 3 [board1, testB12]
-testCrusher03 = crusher'_c5n7 (fst testCrusher02) 'B' 3 3 [(fst testCrusher01), board1, testB12]
-
+testCrusher02 = crusher'_c5n7 (fst (fst testCrusher01)) 'B' 2 3 [board1, testB12]
+testCrusher03 = crusher'_c5n7 (fst (fst testCrusher02)) 'B' 3 3 
+					[(fst (fst testCrusher01)), board1, testB12]
 
 testGenUp0 = generateUps_c5n7 testB1 (Pos 1 1, 'W')
 testGenUp1 = generateUps_c5n7 testB2 (Pos 1 2, 'B')
@@ -404,33 +416,32 @@ testGameOver0 = gameOver_c5n7 testB7 testGenerateBoards1
 testGameOver1 = gameOver_c5n7 testB8 testGenerateBoards2
 testGameOver2 = gameOver_c5n7 testB10 testGenerateBoards3
 
-testMiniMax0 = miniMax_c5n7 0 (map (makeHeuristic_c5n7 'B') testGenerateBoards5) 
+--testMiniMax0 = miniMax_c5n7 0 (map (makeHeuristic_c5n7 'B') testGenerateBoards5) 
 
 testMakeHr0 = map snd (map (makeHeuristic_c5n7 'B') testGenerateBoards5)
 
 
-testCrusher14 = crusherPrint_c5n7 3 (crusher_c5n7 "WW--BB--BB---B---W-" 'B' 1 3 [])
-testCrusher15 = crusherPrint_c5n7 3 (crusher_c5n7 "WW--BB--BB---B---W-" 'B' 3 3 [])
-testCrusher16 = crusherPrint_c5n7 3 (crusher_c5n7 "WW--BB--BB---B---W-" 'B' 2 3 [])
-testCrusher17 = crusherPrint_c5n7 3 (crusher_c5n7 "WW--BB--BB---B---W-" 'B' 4 3 [])
+testCrusher14 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 1 3)
+testCrusher15 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 3 3)
+testCrusher16 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 2 3)
+testCrusher17 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 4 3)
 playCrusher22 = (playCrusher_c5n7 "WW--BB--BB---B---W-" 10 'B' 3 [])
 
-testCrusher0 = crusher_c5n7 "www-ww-------bb-bbb" 'w' 3 3 []
-testCrusher1 = crusher_c5n7 "www-ww-------bb-bbb" 'b' 3 3 []
-testCrusher2 = crusher_c5n7 "WWW-WW---B---BB-BB-" 'w' 3 3 []
-testCrusher3 = crusher_c5n7 "WWW-WW---B---BB-BB-" 'w' 3 3 
-							["www-ww-------bb-bbb"]
-testCrusher4 = crusher_c5n7 "WWWWWWWWWBBBBBBBBBB" 'w' 3 3 []
-testCrusher5 = crusher_c5n7 (head testCrusher4) 'b' 3 3 (tail testCrusher4)
-testCrusher6 = crusher_c5n7 "--W------WW-BWB----" 'w' 3 3 []
-testCrusher7 = crusher_c5n7 "--W------WW-BWB----" 'b' 3 3 []
-testCrusher8 = crusher_c5n7 "--W--W---WW-BBB----" 'W' 3 3 []
-testCrusher9 = crusherPrint_c5n7 3 (crusher_c5n7 "WBWBBBB-----BBBBWBW" 'W' 3 3 [])
-testCrusher10 = crusherPrint_c5n7 3 (crusher_c5n7 "-WW-W--BBB---------" 'W' 3 3 [])
-testCrusher11 = crusherPrint_c5n7 3 (crusher_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])
+testCrusher0 = crusher_c5n7 ["www-ww-------bb-bbb"] 'w' 3 3 
+testCrusher1 = crusher_c5n7 ["www-ww-------bb-bbb"]'b' 3 3 
+testCrusher2 = crusher_c5n7 ["WWW-WW---B---BB-BB-"] 'w' 3 3 
+testCrusher3 = crusher_c5n7 ["WWW-WW---B---BB-BB-","www-ww-------bb-bbb"] 'w' 3 3 
+testCrusher4 = crusher_c5n7 ["WWWWWWWWWBBBBBBBBBB"] 'w' 3 3
+testCrusher5 = crusher_c5n7 testCrusher4 'b' 3 3
+testCrusher6 = crusher_c5n7 ["--W------WW-BWB----"] 'w' 3 3
+testCrusher7 = crusher_c5n7 ["--W------WW-BWB----"] 'b' 3 3
+testCrusher8 = crusher_c5n7 ["--W--W---WW-BBB----"] 'W' 3 3
+testCrusher9 = crusherPrint_c5n7 3 (crusher_c5n7 ["WBWBBBB-----BBBBWBW"] 'W' 3 3)
+testCrusher10 = crusherPrint_c5n7 3 (crusher_c5n7 ["-WW-W--BBB---------"] 'W' 3 3)
+testCrusher11 = crusherPrint_c5n7 3 (crusher_c5n7 ["-WW-W--BBB---------"] 'B' 4 3)
 testCrusher12 = crusherPrint_c5n7 4  
-			(crusher_c5n7 "WW----WB---BB------------------------" 'W' 4 4 [])
-testCrusher13 = crusherPrint_c5n7 3 (crusher_c5n7 "WW--BB--BB---B---W-" 'B' 3 3 [])			
+			(crusher_c5n7 ["WW----WB---BB------------------------"] 'W' 4 4)
+testCrusher13 = crusherPrint_c5n7 3 (crusher_c5n7 ["WW--BB--BB---B---W-"] 'B' 3 3)			
 
 playCrusher0 = prettyPrint_c5n7 (map (splitIntoRows_c5n7 3) 
 					(playCrusher_c5n7 "WWWWWWWWWBBBBBBBBBB" 7 'w' 3 []))
@@ -489,7 +500,7 @@ playCrusherH_c5n7 initBoard currMove numMoves side size history
 						(otherSide_c5n7 side) 
 						size 
 						(tail currentMove)
-	where currentMove = crusher_c5n7 initBoard side 3 size history 
+	where currentMove = crusher_c5n7 (initBoard:history) side 3 size
 
 -- Consumes a list of list of String, lolos, and prints it to the console in 
 -- the format suggested by the assignment for ease of reading. If the solution 
