@@ -48,11 +48,11 @@ getString board row = [char | (Pos m n, char) <- (sort board), m == row]
 crusher' :: Board -> Char -> Int -> Int -> [Board] -> Bool -> Game
 crusher' board side currDepth depth history isFirst
 	| currDepth == depth 		= game
-	| gameOver board boardList	= addHr game (gameEndScore currDepth)
+	| gameOver board boardList	= (board, (gameEndScore currDepth))
 	| not isFirst 
-		= addHr game (getHr (head nextGame))
+		= (board, (getHr (head nextGame)))
 	| otherwise 
-	= if null nextGame then game else (head nextGame)
+		= if null nextGame then game else (head nextGame)
 	where 
 		game = makeHeuristic board side
 		evaluatedBoards = 
@@ -381,18 +381,19 @@ testCrusher12 = crusherPrint 4
 			(crusher_c5n7 "WW----WB---BB------------------------" 'W' 4 4 [])
 
 playCrusher0 = prettyPrint (map (splitIntoRows_c5n7 3) 
-					(playCrusher' "WWWWWWWWWBBBBBBBBBB" 7 'w' []))
+					(playCrusher "WWWWWWWWWBBBBBBBBBB" 7 'w' 3 []))
 playCrusher1 = prettyPrint (map (splitIntoRows_c5n7 3) 
-					(playCrusher' "www-ww-------bb-bbb" 20 'w' []))
-playCrusher2 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 40 'w' [])
-playCrusher3 = crusherPrint 3 (playCrusher' "www-ww-------bb-bbb" 100 'w' [])
-playCrusher4 = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'w' [])
-playCrusher4a = crusherPrint 3 (playCrusher' "--W------WW-BWB----" 4 'b' [])
-playCrusher5 = crusherPrint 3 (playCrusher' "--W--W---WW-BBB----" 4 'w' [])
-playCrusher6 = crusherPrint 3 (playCrusher' "--W--W---WW-BB-B---" 4 'B' [])
-playCrusher7 = crusherPrint 3 (playCrusher' "--B--B---BB-WWW----" 4 'B' [])
-playCrusher8 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 4 'W' [])
-playCrusher9 = crusherPrint 3 (playCrusher' "-WW-W--BBB---------" 80 'B' [])
+					(playCrusher "www-ww-------bb-bbb" 20 'w' 3 []))
+playCrusher2 = crusherPrint 3 (playCrusher "www-ww-------bb-bbb" 40 'w' 3 [])
+playCrusher3 = crusherPrint 3 (playCrusher "www-ww-------bb-bbb" 100 'w' 3 [])
+playCrusher4 = crusherPrint 3 (playCrusher "--W------WW-BWB----" 4 'w' 3 [])
+playCrusher4a = crusherPrint 3 (playCrusher "--W------WW-BWB----" 4 'b' 3 [])
+playCrusher5 = crusherPrint 3 (playCrusher "--W--W---WW-BBB----" 4 'w' 3 [])
+playCrusher6 = crusherPrint 3 (playCrusher "--W--W---WW-BB-B---" 4 'B' 3 [])
+playCrusher7 = crusherPrint 3 (playCrusher "--B--B---BB-WWW----" 4 'B' 3 [])
+playCrusher8 = crusherPrint 3 (playCrusher "-WW-W--BBB---------" 4 'W' 3 [])
+playCrusher9 = crusherPrint 3 (playCrusher "-WW-W--BBB---------" 80 'B' 3 [])
+playCrusher9a = crusherPrint 3 (playCrusher "-WW-W--BBB---------" 20 'B' 3 [])
 playCrusher10 = crusherPrint 4 (playCrusher
 						"WW----WBW--BBB-----------------------" 5 'W' 4 [])
 playCrusher11 = crusherPrint 4 (playCrusher
@@ -413,6 +414,10 @@ playCrusher18 = crusherPrint 4 (playCrusher
 						"WW----WBW--BBB-----------------------" 3 'B' 4 [])
 playCrusher19 = crusherPrint 4 (playCrusher
 						"WW----WBW--BBB-----------------------" 10 'B' 4 [])
+playCrusher20 = crusherPrint 4 (playCrusher 
+						"wwww-www---ww-----------bb---bbb-bbbb" 100 'w' 4 [])
+playCrusher21 = crusherPrint 4 (playCrusher 
+						"wwww-www---ww-----------bb---bbb-bbbb" 10 'w' 4 [])
 						
 						
 playCrusher initBoard numMoves side size history 
@@ -429,12 +434,6 @@ playCrusherH initBoard currMove numMoves side size history
 						(tail currentMove)
 	where currentMove = crusher_c5n7 initBoard side 3 size history 
 	
-playCrusher' initBoard 1 side history = 
-	crusher_c5n7 initBoard (otherSide side) 4 3 []
-playCrusher' initBoard numMoves side history = 
-	crusher_c5n7 (head result) (otherSide side) 4 3 (tail result)
-	where result = playCrusher' initBoard (numMoves-1) (otherSide side) history
-
 -- Consumes a list of list of String, lolos, and prints it to the console in 
 -- the format suggested by the assignment for ease of reading. If the solution 
 -- is an empty list, ie the function is passed the empty list, then it prints
@@ -450,14 +449,5 @@ printStrings :: [String] -> IO ()
 printStrings los = do {putStr (take ((length newString) - 1) newString); 
 						putStr "\n\n"}
 					where newString = unlines los 
-
--- Consumes a list of String, los, and an accumulator, acc, and returns a 
--- formatted list of String. Adds appropriate ' ', '\"', and ',' characters
--- to the list of Strings to match the suggested output format.
-format :: [String] -> [String] -> [String]	
-format [] acc = acc
-format (s:[]) acc = (acc ++ [(' ' : '\"' : s) ++ "\""])
-format (s:los) [] = format los [('\"' : s) ++ "\","]
-format (s:los) acc = format los (acc ++ [(" \"" ++ s) ++ "\","]) 
 
 crusherPrint size n = prettyPrint (map (splitIntoRows_c5n7 size) n)
