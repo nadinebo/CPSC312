@@ -9,17 +9,6 @@ data Position = Pos Int Int
 				deriving (Ord, Eq, Show)
 type Piece = Char
 
---Added stuff here
-
-getBestMove_c5n7 :: String -> Char -> Int -> Int -> [String] -> [String]
-getBestMove_c5n7 board side depth size history
-	= (firstMove : [board]) ++ history
-	where 
-		firstMove = (listOfMoves)!!1
-		listOfMoves = reverse (playCrusher_c5n7 board depth side size history)
-
----stuff ends here
-
 crusher_c5n7 :: [String] -> Char -> Int -> Int -> [String]
 crusher_c5n7 (board:history) side depth size = 
 	(toString_c5n7 
@@ -72,10 +61,11 @@ crusher'_c5n7 board side currDepth depth history
 												(board:history)
 		generatedBoards = generateBoards_c5n7 board side currDepth history
 
-runCrusherOnEach [] _ _ _ _ = []
-runCrusherOnEach (board:boards) side currDepth depth history =
+runCrusherOnEach_c5n7 :: [Board] -> Char -> Int -> Int -> [Board] -> (Game, Int)
+runCrusherOnEach_c5n7 [] _ _ _ _ = []
+runCrusherOnEach_c5n7 (board:boards) side currDepth depth history =
 	(crusher'_c5n7 board side currDepth depth history) :
-				(runCrusherOnEach boards side currDepth depth history)
+				(runCrusherOnEach_c5n7 boards side currDepth depth history)
 
 gameOver_c5n7 :: Board -> [Board] -> Bool		   
 gameOver_c5n7 board [] = True 
@@ -481,10 +471,7 @@ playCrusher19 = crusherPrint_c5n7 4 (playCrusher_c5n7
 playCrusher20 = crusherPrint_c5n7 4 (playCrusher_c5n7 
 						"wwww-www---ww-----------bb---bbb-bbbb" 100 'w' 4 [])
 playCrusher21 = crusherPrint_c5n7 4 (playCrusher_c5n7 
-						"wwww-www---ww-----------bb---bbb-bbbb" 10 'w' 4 [])
-
-bestMove0 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'W' 4 3 [])	
-bestMove1 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'B' 4 3 [])					
+						"wwww-www---ww-----------bb---bbb-bbbb" 10 'w' 4 [])				
 
 playCrusher_c5n7 :: String -> Int -> Char -> Int -> [String] -> [String]						
 playCrusher_c5n7 initBoard numMoves side size history 
