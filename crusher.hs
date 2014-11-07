@@ -9,6 +9,11 @@ data Position = Pos Int Int
 				deriving (Ord, Eq, Show)
 type Piece = Char
 
+
+-- Crusher function to run from the outside. Consumes a list of Strings
+-- (board:history), a side (side), a move depth (depth), and a board size (size).
+-- Returns a lsit of strings with the next board as the first string and the
+-- history as the rest of the strings. 
 crusher_c5n7 :: [String] -> Char -> Int -> Int -> [String]
 crusher_c5n7 (board:history) side depth size = 
 	(toString_c5n7 
@@ -43,7 +48,13 @@ getMax_c5n7 board = maximum [n | (Pos m n, char) <- board]
 -- associated with the row, row and creates a String from them.
 getString_c5n7 :: Board -> Int -> String
 getString_c5n7 board row = [char | (Pos m n, char) <- (sort board), m == row]
-									
+	
+-- Recursive helper function to determine the next move. Consumes a Board
+-- (board), a Char representing which side is making the move (side), the 
+-- current depth (currDepth) as an Int, the maximum depth (depth) as an Int,
+-- and a list of Board representing the history of moves (history). 
+-- Returns a tuple with a Game representing the next move, and an Int, 
+-- representing the depth at which a gameOver board was seen. 
 crusher'_c5n7 :: Board -> Char -> Int -> Int -> [Board] -> (Game, Int)
 crusher'_c5n7 board side currDepth depth history
 	| currDepth == depth	= (game, depth)
@@ -61,6 +72,13 @@ crusher'_c5n7 board side currDepth depth history
 												(board:history)
 		generatedBoards = generateBoards_c5n7 board side currDepth history
 
+-- Helper function to run crusher' on each of a board's children. Consumes a
+-- list of a board's children (board:boards), the side that will make the top
+-- level move (side), the current depth of the boards (currDepth), the maximum
+-- depth (depth), and the history of boards (histoy) (where the first is the 
+-- parent of the children). Returns a list of tuples with Games and Ints 
+-- representing the next move of each of its children, and the int representing
+-- the depth at which a gameOver board was seen.
 runCrusherOnEach_c5n7 :: [Board] -> Char -> Int -> Int -> [Board] -> [(Game, Int)]
 runCrusherOnEach_c5n7 [] _ _ _ _ = []
 runCrusherOnEach_c5n7 (board:boards) side currDepth depth history =
