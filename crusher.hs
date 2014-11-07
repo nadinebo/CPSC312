@@ -407,7 +407,6 @@ testCrusher11 = crusherPrint_c5n7 3 (crusher_c5n7 "-WW-W--BBB---------" 'B' 4 3 
 testCrusher12 = crusherPrint_c5n7 4  
 			(crusher_c5n7 "WW----WB---BB------------------------" 'W' 4 4 [])
 
-<<<<<<< HEAD
 playCrusher0 = prettyPrint_c5n7 (map (splitIntoRows_c5n7 3) 
 					(playCrusher_c5n7 "WWWWWWWWWBBBBBBBBBB" 7 'w' 3 []))
 playCrusher1 = prettyPrint_c5n7 (map (splitIntoRows_c5n7 3) 
@@ -442,9 +441,9 @@ playCrusher18 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 3 'B' 4 [])
 playCrusher19 = crusherPrint_c5n7 4 (playCrusher_c5n7
 						"WW----WBW--BBB-----------------------" 10 'B' 4 [])
-playCrusher20 = crusherPrint 4 (playCrusher_c5n7 
+playCrusher20 = crusherPrint_c5n7 4 (playCrusher_c5n7 
 						"wwww-www---ww-----------bb---bbb-bbbb" 100 'w' 4 [])
-playCrusher21 = crusherPrint 4 (playCrusher_c5n7 
+playCrusher21 = crusherPrint_c5n7 4 (playCrusher_c5n7 
 						"wwww-www---ww-----------bb---bbb-bbbb" 10 'w' 4 [])
 
 bestMove0 = crusherPrint_c5n7 3 (getBestMove_c5n7 "-WW-W--BBB---------" 'W' 4 3 [])	
