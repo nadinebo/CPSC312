@@ -3,7 +3,7 @@ import Data.Char
 import Data.List
 import Data.Ord
 
-type Game = (Board, Int) -- Probably change to a data
+type Game = (Board, Int) 
 type Board = [(Position, Piece)]
 data Position = Pos Int Int
 				deriving (Ord, Eq, Show)
