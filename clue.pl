@@ -177,18 +177,12 @@ suggest(T) :- stub(T). /*check history */
 /* Later on can keep track of whether the card was shown or not */
 issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
 
-/* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
-
-%allsuggestions :- 
-
-%show :-
 
 shown(Card,room,Player) :- validroom(Card),assert(shownrooms(Card)),validplayer(Player),!.
 
 shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople(Card)),validplayer(Player),!.
 
 shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons(Card)),validplayer(Player),!.
-
 
 showRooms :- forall(validroom(R), writeln(R)).
 
@@ -197,3 +191,17 @@ showWeapons :- forall(validweapon(W), writeln(W)).
 showSuspects :- forall(validsuspect(S), writeln(S)).
 
 showPlayers :- forall(validplayer(P), writeln(P)). /* TODO make it print only the numofplayers */
+
+/* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
+showSuggested :- forall(suggestion(S), writeln(S)).
+
+
+showall :- 	tab(7),writeln('Suspects:'),
+			showSuspects,
+			tab(7),writeln('Locations:'),
+			showRooms,
+			tab(7),writeln('Weapons:'),
+			showWeapons,
+			tab(7),writeln('Suggested:'),
+			showSuggested.
+			
