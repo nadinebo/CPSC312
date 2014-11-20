@@ -138,8 +138,8 @@ validplayer(player6).
 :- dynamic shownrooms/1.
 :- dynamic shownpeople/1.
 :- dynamic shownweapons/1.
+:- dynamic myplay/1.
 
-validroom(_).
 
 validateRooms([]).
 validateRooms([H|T]) :- assert(validroom(H)), validateRooms(T).
@@ -170,13 +170,13 @@ suggestFirst(P,L)
 		/* select random weapon from valid ones later */
 
 
-suggest(T) :- stub(T). /*check history */
+suggest(T) :- stub(T). /*check history and suggested + heuristic used here */
 
 
 /* Fill this in when someone suggests */
 /* Later on can keep track of whether the card was shown or not */
 issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
-
+mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
 
 shown(Card,room,Player) :- validroom(Card),assert(shownrooms(Card)),validplayer(Player),!.
 
@@ -195,6 +195,8 @@ showPlayers :- forall(validplayer(P), writeln(P)). /* TODO make it print only th
 /* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
 showSuggested :- forall(suggestion(S), writeln(S)).
 
+showMySuggestions :- forall(myplay(S), writeln(S)).
+
 
 showall :- 	tab(7),writeln('Suspects:'),
 			showSuspects,
@@ -203,5 +205,7 @@ showall :- 	tab(7),writeln('Suspects:'),
 			tab(7),writeln('Weapons:'),
 			showWeapons,
 			tab(7),writeln('Suggested:'),
-			showSuggested.
+			showSuggested,
+			tab(7),writeln('My Suggestions:'),
+			showMySuggestions.
 			
