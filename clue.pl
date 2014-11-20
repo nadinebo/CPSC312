@@ -131,6 +131,7 @@ validplayer(player6).
 :- dynamic myweapon/1.
 :- dynamic myroom/1.
 :- dynamic myplayer/1.
+:- dynamic numofplayers/1.
 :- dynamic validweapon/1.
 :- dynamic validroom/1.
 :- dynamic suggestion/1.
@@ -148,7 +149,7 @@ validateWeapons([H|T]) :- assert(validweapon(H)), validateWeapons(T).
 
 validateWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
-validatePlayersNumber(N) :- validplayersnum(N).
+validatePlayersNumber(N) :- validplayersnum(N),assert(numofplayers(N)).
 
 validatePlayer(P) :- validplayer(P).
 
@@ -171,12 +172,13 @@ suggestFirst(P,L)
 
 suggest(T) :- stub(T). /*check history */
 
-test(R) :- assert(myroom(R)),write(myroom).
 
 /* Fill this in when someone suggests */
+/* Later on can keep track of whether the card was shown or not */
 issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
 
 /* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
+
 %allsuggestions :- 
 
 %show :-
@@ -188,4 +190,10 @@ shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople(Card)),validp
 shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons(Card)),validplayer(Player),!.
 
 
+showRooms :- forall(validroom(R), writeln(R)).
 
+showWeapons :- forall(validweapon(W), writeln(W)).
+
+showSuspects :- forall(validsuspect(S), writeln(S)).
+
+showPlayers :- forall(validplayer(P), writeln(P)). /* TODO make it print only the numofplayers */
