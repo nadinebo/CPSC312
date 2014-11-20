@@ -178,11 +178,11 @@ suggest(T) :- stub(T). /*check history and suggested + heuristic used here */
 issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
 mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
 
-shown(Card,room,Player) :- validroom(Card),assert(shownrooms(Card)),validplayer(Player),!.
+shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),validplayer(Player),!.
 
-shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople(Card)),validplayer(Player),!.
+shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player])),validplayer(Player),!.
 
-shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons(Card)),validplayer(Player),!.
+shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),validplayer(Player),!.
 
 showRooms :- forall(validroom(R), writeln(R)).
 
@@ -197,15 +197,28 @@ showSuggested :- forall(suggestion(S), writeln(S)).
 
 showMySuggestions :- forall(myplay(S), writeln(S)).
 
+showShownRooms :-	forall(shownrooms(R), writeln(R)).
+
+showShownPeople :-	forall(shownpeople(P), writeln(P)).
+
+showShownWeapons :-	forall(shownweapons(W), writeln(W)).
+
 
 showall :- 	tab(7),writeln('Suspects:'),
 			showSuspects,
 			tab(7),writeln('Locations:'),
 			showRooms,
 			tab(7),writeln('Weapons:'),
-			showWeapons,
+			showWeapons,nl,
 			tab(7),writeln('Suggested:'),
 			showSuggested,
 			tab(7),writeln('My Suggestions:'),
-			showMySuggestions.
+			showMySuggestions,nl,
+			tab(7),writeln('Shown Cards:'),nl,
+			tab(7),writeln('* People:'),
+			showShownPeople,
+			tab(7),writeln('* Rooms:'),
+			showShownRooms,
+			tab(7),writeln('* Weapons:'),
+			showShownWeapons.
 			
