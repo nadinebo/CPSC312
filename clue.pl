@@ -78,17 +78,19 @@ The program should go beyond what's been described so far. Some suggestions:
 
 test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
+		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 		validatePlayersNumber(2),
-		validateSuspect(mustard),
-		validateLocation(bar),
-		validateWeapon(flamethrower),
-		validatePlayer(player1),
-		validateMe(player2).
+		validateMyPerson(mustard),
+		validateMyLocation(bar),
+		validateMyWeapon(flamethrower),
+		validateMyPlayerNumber(player1),
+		validateMe(green).
 		
 
 clue :- setUp.
 
-setUp :- 		write_ln('Please enter rooms used: '),
+setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
+				write_ln('Please enter rooms used: '),
 				read(Rooms),
 				validateRooms(Rooms),nl,
 				write_ln('Please enter weapons used: '),
@@ -99,17 +101,20 @@ setUp :- 		write_ln('Please enter rooms used: '),
 				validatePlayersNumber(Players),
 				write_ln('Please enter your PERSON card: '),
 				read(PCard),
-				validateSuspect(PCard),
+				validateMyPerson(PCard),
 				write_ln('Please enter your LOCATION card: '),
 				read(LCard),
-				validateLocation(LCard),
+				validateMyLocation(LCard),
 				write_ln('Please enter your WEAPON card: '),
 				read(WCard),
-				validateWeapon(WCard),
+				validateMyWeapon(WCard),
 				write_ln('Please enter whose turn it is (eg. player1 etc.): '),
 				read(Turn),
 				validatePlayer(Turn),
 				write_ln('Please enter which player you are (eg. player2): '),
+				read(P),
+				validateMyPlayerNumber(P),
+				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),!,
 				processTurn(Turn, Me,PCard,LCard),!.
@@ -137,6 +142,7 @@ validplayer(player4).
 validplayer(player5).
 validplayer(player6).
 
+:- dynamic me/1.
 :- dynamic myperson/1.
 :- dynamic myweapon/1.
 :- dynamic myroom/1.
@@ -164,15 +170,25 @@ validateWeapons([H|T]) :- not(validweapon(H)),
 						assert(possibleweapon(H)),
 						assert(validweapon(H)), validateWeapons(T).
 
-validateWeapon(W) :- validweapon(W),assert(myweapon(W)).
+validateSuspects([]).
+validateSuspects([H|T]) :- validsuspect(H),assert(possibleperson(H)),
+						validateSuspects(T).
+
 
 validatePlayersNumber(N) :- validplayersnum(N),assert(numofplayers(N)).
 
 validatePlayer(P) :- validplayer(P).
 
-validateSuspect(P) :- validsuspect(P),assert(myperson(P)).
+validateMe(M) :- validsuspect(M),assert(me(M)),!.
 
-validateLocation(L) :- validroom(L),assert(myroom(L)).
+validateMyPlayerNumber(N) :- validatePlayer(N),assert(myplayer(N)).
+
+validateMyPerson(S) :- validsuspect(S),assert(myperson(S)).
+
+validateMyLocation(L) :- validroom(L),assert(myroom(L)).
+
+validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
+
 
 /* My turn */
 
@@ -224,7 +240,11 @@ showShownPeople :-	forall(shownpeople(P), writeln(P)).
 
 showShownWeapons :-	forall(shownweapons(W), writeln(W)).
 
-showPossibleRooms :-	forall(possibleroom(R), writeln(R)).
+showPossibleRooms :- forall(possibleroom(R), writeln(R)).
+
+showPossiblePeople :- forall(possibleperson(P), writeln(P)).
+
+showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
 
 
 showall :- 	tab(7),writeln('Suspects:'),
@@ -244,8 +264,12 @@ showall :- 	tab(7),writeln('Suspects:'),
 			showShownRooms,
 			tab(7),writeln('* Weapons:'),
 			showShownWeapons,
+			tab(7),writeln('Possible People:'),
+			showPossiblePeople,
 			tab(7),writeln('Possible Rooms:'),
-			showPossibleRooms.
+			showPossibleRooms,
+			tab(7),writeln('Possible Weapons:'),
+			showPossibleWeapons.
 
 getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
 
