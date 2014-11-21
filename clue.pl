@@ -76,6 +76,16 @@ The program should go beyond what's been described so far. Some suggestions:
 
 */
 
+test :- validateRooms([kitchen,bar,bedroom,garage,library]),
+		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
+		validatePlayersNumber(2),
+		validateSuspect(mustard),
+		validateLocation(bar),
+		validateWeapon(flamethrower),
+		validatePlayer(player1),
+		validateMe(player2).
+		
+
 clue :- setUp.
 
 setUp :- 		write_ln('Please enter rooms used: '),
@@ -101,8 +111,8 @@ setUp :- 		write_ln('Please enter rooms used: '),
 				validatePlayer(Turn),
 				write_ln('Please enter which player you are (eg. player2): '),
 				read(Me),
-				validatePlayer(Me),!.
-				/*processTurn(Turn, Me,PCard,LCard),!.*/
+				validateMe(Me),!,
+				processTurn(Turn, Me,PCard,LCard),!.
 
 
 stub(_).
@@ -140,12 +150,19 @@ validplayer(player6).
 :- dynamic shownweapons/1.
 :- dynamic myplay/1.
 
+:- dynamic possibleroom/1.
+:- dynamic possibleperson/1.
+:- dynamic possibleweapon/1.
 
 validateRooms([]).
-validateRooms([H|T]) :- assert(validroom(H)), validateRooms(T).
+validateRooms([H|T]) :- not(validroom(H)),
+						assert(possibleroom(H)),
+						assert(validroom(H)), validateRooms(T).
 
 validateWeapons([]).
-validateWeapons([H|T]) :- assert(validweapon(H)), validateWeapons(T).
+validateWeapons([H|T]) :- not(validweapon(H)),
+						assert(possibleweapon(H)),
+						assert(validweapon(H)), validateWeapons(T).
 
 validateWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
@@ -158,10 +175,11 @@ validateSuspect(P) :- validsuspect(P),assert(myperson(P)).
 validateLocation(L) :- validroom(L),assert(myroom(L)).
 
 /* My turn */
-/*processTurn(T,Me,P,L).*/
+
+validateMe(P) :- assert(myplayer(T)).
 
 processTurn(T,T,P,L) :- assert(myplayer(T)),suggestFirst(P,L),!.
-
+processTurn(T,Me,P,L).
 suggestFirst(P,L)
 	:- write('We are just starting here! Why don\'t you try: '), 
 		write(P),
@@ -178,11 +196,14 @@ suggest(T) :- stub(T). /*check history and suggested + heuristic used here */
 issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
 mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
 
-shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),validplayer(Player),!.
+shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),
+							validplayer(Player),removeRoomFromPossibilities(Card),!.
 
-shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player])),validplayer(Player),!.
+shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player])),
+							validplayer(Player),removePersonFromPossibilities(Card),!.
 
-shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),validplayer(Player),!.
+shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),
+							validplayer(Player),removeWeaponFromPossibilities(Card),!.
 
 showRooms :- forall(validroom(R), writeln(R)).
 
@@ -203,10 +224,12 @@ showShownPeople :-	forall(shownpeople(P), writeln(P)).
 
 showShownWeapons :-	forall(shownweapons(W), writeln(W)).
 
+showPossibleRooms :-	forall(possibleroom(R), writeln(R)).
+
 
 showall :- 	tab(7),writeln('Suspects:'),
 			showSuspects,
-			tab(7),writeln('Locations:'),
+			tab(7),writeln('Rooms:'),
 			showRooms,
 			tab(7),writeln('Weapons:'),
 			showWeapons,nl,
@@ -220,5 +243,22 @@ showall :- 	tab(7),writeln('Suspects:'),
 			tab(7),writeln('* Rooms:'),
 			showShownRooms,
 			tab(7),writeln('* Weapons:'),
-			showShownWeapons.
-			
+			showShownWeapons,
+			tab(7),writeln('Possible Rooms:'),
+			showPossibleRooms.
+
+getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
+
+getRoomsSize :- findall(H,validroom(H),Z),length(Z,N),writeln(N).
+
+removeRoomFromPossibilities(R) :- retract(possibleroom(R)).
+
+removePersonFromPossibilities(P) :- retract(possibleperson(P)).
+
+removeWeaponFromPossibilities(W) :- retract(possibleweapon(W)).
+
+%roomSuggestion :- 
+
+%addToPossibilities(Person,Room,Weapon) :- 
+
+%suspectPossibilities(Person) :-
