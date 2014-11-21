@@ -83,8 +83,24 @@ test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateMyPerson(mustard),
 		validateMyLocation(bar),
 		validateMyWeapon(flamethrower),
-		validateMyPlayerNumber(player1),
-		validateMe(green).
+		validateMyPlayerNumber(1),
+		validateMe(green),
+		removeMyRoom, 
+		removeMyPerson, 
+		removeMyWeapon.
+		
+test1 :- validateRooms([kitchen,bar,bedroom]),
+		validateWeapons([wrench,knife,gun]),
+		validateSuspects([scarlet,plum,peacock]),
+		validatePlayersNumber(2),
+		validateMyPerson(scarlet),
+		validateMyLocation(bar),
+		validateMyWeapon(wrench),
+		validateMyPlayerNumber(1),
+		validateMe(plum),
+		removeMyRoom, 
+		removeMyPerson, 
+		removeMyWeapon.
 		
 
 clue :- setUp.
@@ -114,6 +130,9 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter which player you are (eg. player2): '),
 				read(P),
 				validateMyPlayerNumber(P),
+				removeMyRoom, 
+				removeMyPerson, 
+				removeMyWeapon,
 				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),!,
@@ -135,12 +154,19 @@ validplayersnum(4).
 validplayersnum(5).
 validplayersnum(6).
 
-validplayer(player1).
+/*validplayer(player1).
 validplayer(player2).
 validplayer(player3).
 validplayer(player4).
 validplayer(player5).
-validplayer(player6).
+validplayer(player6).*/
+
+validplayer(1).
+validplayer(2).
+validplayer(3).
+validplayer(4).
+validplayer(5).
+validplayer(6).
 
 :- dynamic me/1.
 :- dynamic myperson/1.
@@ -213,13 +239,16 @@ issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapo
 mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
 
 shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),
-							validplayer(Player),removeRoomFromPossibilities(Card),!.
+							validplayer(Player),removeRoomFromPossibilities(Card),
+							writeln('Wasn\'t here! Do we have the answer? '),accuse,!.
 
 shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player])),
-							validplayer(Player),removePersonFromPossibilities(Card),!.
+							validplayer(Player),removePersonFromPossibilities(Card),
+							writeln('Innocent! Do we have the answer? '),accuse,!.
 
 shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),
-							validplayer(Player),removeWeaponFromPossibilities(Card),!.
+							validplayer(Player),removeWeaponFromPossibilities(Card),
+							writeln('Clean! Do we have the answer? '),accuse,!.
 
 showRooms :- forall(validroom(R), writeln(R)).
 
@@ -275,14 +304,42 @@ getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
 
 getRoomsSize :- findall(H,validroom(H),Z),length(Z,N),writeln(N).
 
+
+printPossibleRoomsSize :- findall(H,possibleroom(H),Z),length(Z,N),writeln(N).
+
+printPossiblePeopleSize :- findall(H,possibleperson(H),Z),length(Z,N),writeln(N).
+
+printPossibleWeaponsSize :- findall(H,possibleweapon(H),Z),length(Z,N),writeln(N).
+
+
+foundRoom :- findall(H,possibleroom(H),Z),length(Z,N),N =:= 1.
+
+foundPerson :- findall(H,possibleperson(H),Z),length(Z,N),N =:= 1.
+
+foundWeapon :- findall(H,possibleweapon(H),Z),length(Z,N),N =:= 1.
+
+
+foundAll :- foundRoom, foundPerson, foundWeapon.
+
+
 removeRoomFromPossibilities(R) :- retract(possibleroom(R)).
 
 removePersonFromPossibilities(P) :- retract(possibleperson(P)).
 
 removeWeaponFromPossibilities(W) :- retract(possibleweapon(W)).
 
+removeMyRoom :- myroom(R),retract(possibleroom(R)),!.
+
+removeMyPerson :- myperson(P),retract(possibleperson(P)),!.
+
+removeMyWeapon :- myweapon(W),retract(possibleweapon(W)),!.
+
+
+accuse :- foundAll,write('It was '),possibleperson(P), write(P),
+			write(' in the '),possibleroom(R), write(R),
+			write(' with a '),possibleweapon(W), write(W).
+
+
 %roomSuggestion :- 
 
-%addToPossibilities(Person,Room,Weapon) :- 
-
-%suspectPossibilities(Person) :-
+/*		*/
