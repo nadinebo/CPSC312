@@ -184,9 +184,12 @@ validplayer(6).
 :- dynamic validweapon/1.
 :- dynamic validroom/1.
 :- dynamic suggestion/1.
+:- dynamic showncards/1.
+%:- dynamic cardsshown/1.
 :- dynamic shownrooms/1.
 :- dynamic shownpeople/1.
 :- dynamic shownweapons/1.
+:- dynamic shownbyme/1.
 :- dynamic myplay/1.
 
 :- dynamic possibleroom/1.
@@ -250,9 +253,12 @@ createPlayerList(N) :- not(playerlist(N)),assert(playerlist(N)),
 /* Later on can keep track of whether the card was shown or not */
 issuggested(Person,Room,Weapon,Player) :-	validsuspect(Person),validroom(Room),
 											validweapon(Weapon),playerlist(Player), 
-											assert(suggestion([Person,Room,Weapon,Player])).
+											assert(suggestion([Person,Room,Weapon,Player])),
+											writeln('Were any cards shown after this suggestion?'),
+											read(R),
+											shownCard(R,Person,Room,Weapon,Player).
 
-mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
+mysuggestion(Person,Room,Weapon) :- assert(myplay([Person,Room,Weapon])).
 
 shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),
 							validplayer(Player),removeRoomFromPossibilities(Card),
@@ -265,6 +271,13 @@ shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player]
 shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),
 							validplayer(Player),removeWeaponFromPossibilities(Card),
 							writeln('Clean! Do we have the answer? '),accuse,!.
+
+shownCard(no,Person,Room,Weapon,Player). /* TODO */
+shownCard(yes,Person,Room,Weapon,Player) :- 	writeln('Enter the number of the player that showed the card:'),
+												read(N),
+												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
+												
+ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: Player, query: Person,Room,Weapon])).
 
 me :- me(Name),writeln(Name).
 
@@ -282,11 +295,15 @@ showSuggested :- forall(suggestion(S), writeln(S)).
 
 showMySuggestions :- forall(myplay(S), writeln(S)).
 
+showShownCards :- forall(showncards(S), writeln(S)).
+
 showShownRooms :-	forall(shownrooms(R), writeln(R)).
 
 showShownPeople :-	forall(shownpeople(P), writeln(P)).
 
 showShownWeapons :-	forall(shownweapons(W), writeln(W)).
+
+showShownByMe :-	forall(shownbyme(S), writeln(S)).
 
 showPossibleRooms :- forall(possibleroom(R), writeln(R)).
 
@@ -312,12 +329,18 @@ showall :- 	writeln('--------------------------'),
 			tab(7),writeln('My Suggestions:'),
 			showMySuggestions,nl,
 			tab(7),writeln('Shown Cards:'),nl,
+			tab(0),writeln('To Others:'),
+			showShownCards,nl,
+			%tab(7),writeln('Shown Cards:'),nl,
+			tab(0),writeln('To Me:'),
 			tab(7),writeln('* People:'),
 			showShownPeople,
 			tab(7),writeln('* Rooms:'),
 			showShownRooms,
 			tab(7),writeln('* Weapons:'),
 			showShownWeapons,nl,
+			tab(0),writeln('By Me:'),
+			showShownByMe,nl,
 			tab(7),writeln('POSSIBILIES'),
 			writeln('--------------------------'),
 			tab(7),writeln('Possible People:'),
@@ -390,6 +413,11 @@ help :- 	writeln('-------------------------'),
 			tab(9),writeln('			shown(<name>,<type>,<player>).'),
 			tab(9),writeln('			Eg. player 1 showed "scarlet" = shown(scarlet,person,1).'),
 			writeln(''),
+			tab(3),writeln('	shownCard:		To manually input if an unknown card was shown to another player,'), 
+			tab(9),writeln('			type: shownCard(<yes/no>,<person>,<room>,<weapon>,<suggester>).'),
+			tab(9),writeln('			Eg. player 1 showed a card to player 2 after a query:'),
+			tab(9),writeln('			"scarlet,kitchen,gun" = shownCard(yes,scarlet,kitchen,gun,2).'),
+			writeln(''),
 			tab(3),writeln('	show<TYPE>: 		To view all rooms/suspects/weapons used in this game, type: '),
 			tab(9),writeln('			showRooms. or showSuspects. or showWeapons  respectively.'),
 			writeln(''),
@@ -404,6 +432,6 @@ help :- 	writeln('-------------------------'),
 			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.').
 
 
-%roomSuggestion :- 
+
 
 /*		*/
