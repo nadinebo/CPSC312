@@ -142,7 +142,7 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				read(Me),
 				validateMe(Me),
 				write_ln('Game initialized! To view the full list of instructions type: help.'),
-				processTurn(Turn, Me,PCard,LCard),!.
+				processTurn(Turn, P,PCard,LCard),!.
 
 
 stub(_).
