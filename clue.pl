@@ -79,7 +79,8 @@ The program should go beyond what's been described so far. Some suggestions:
 test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
-		validatePlayersNumber(2),
+		validatePlayersNumber(3),
+		createPlayerList(3),
 		validateMyPerson(mustard),
 		validateMyLocation(bar),
 		validateMyWeapon(flamethrower),
@@ -87,12 +88,14 @@ test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateMe(green),
 		removeMyRoom, 
 		removeMyPerson, 
-		removeMyWeapon.
+		removeMyWeapon,
+		write_ln('Game initialized! To view the full list of instructions type: help.').
 		
 test1 :- validateRooms([kitchen,bar,bedroom]),
 		validateWeapons([wrench,knife,gun]),
 		validateSuspects([scarlet,plum,peacock]),
 		validatePlayersNumber(2),
+		createPlayerList(2),
 		validateMyPerson(scarlet),
 		validateMyLocation(bar),
 		validateMyWeapon(wrench),
@@ -100,21 +103,23 @@ test1 :- validateRooms([kitchen,bar,bedroom]),
 		validateMe(plum),
 		removeMyRoom, 
 		removeMyPerson, 
-		removeMyWeapon.
+		removeMyWeapon,
+		write_ln('Game initialized! To view the full list of instructions type: help.').
 		
 
 clue :- setUp.
 
 setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
-				write_ln('Please enter rooms used: '),
+				write_ln('Please enter rooms used (eg. [room1,room2].): '),
 				read(Rooms),
 				validateRooms(Rooms),nl,
-				write_ln('Please enter weapons used: '),
+				write_ln('Please enter weapons used (eg. [weapon1,weapon2].): '),
 				read(Weapons),
 				validateWeapons(Weapons),nl,
 				write_ln('Please enter the number of players: '),
 				read(Players),
 				validatePlayersNumber(Players),
+				createPlayerList(Players),
 				write_ln('Please enter your PERSON card: '),
 				read(PCard),
 				validateMyPerson(PCard),
@@ -124,10 +129,10 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter your WEAPON card: '),
 				read(WCard),
 				validateMyWeapon(WCard),
-				write_ln('Please enter whose turn it is (eg. player1 etc.): '),
+				write_ln('Please enter whose turn it is (eg. player1 = 1): '),
 				read(Turn),
 				validatePlayer(Turn),
-				write_ln('Please enter which player you are (eg. player2): '),
+				write_ln('Please enter which player you are (eg. player2 = 2): '),
 				read(P),
 				validateMyPlayerNumber(P),
 				removeMyRoom, 
@@ -135,7 +140,8 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				removeMyWeapon,
 				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
-				validateMe(Me),!,
+				validateMe(Me),
+				write_ln('Game initialized! To view the full list of instructions type: help.'),
 				processTurn(Turn, Me,PCard,LCard),!.
 
 
@@ -174,6 +180,7 @@ validplayer(6).
 :- dynamic myroom/1.
 :- dynamic myplayer/1.
 :- dynamic numofplayers/1.
+:- dynamic playerlist/1.
 :- dynamic validweapon/1.
 :- dynamic validroom/1.
 :- dynamic suggestion/1.
@@ -223,19 +230,28 @@ validateMe(P) :- assert(myplayer(T)).
 processTurn(T,T,P,L) :- assert(myplayer(T)),suggestFirst(P,L),!.
 processTurn(T,Me,P,L).
 suggestFirst(P,L)
-	:- write('We are just starting here! Why don\'t you try: '), 
+	:- writeln('We are just starting here! Why don\'t you try: '), 
 		write(P),
 		write(' in the '),write(L),
-		write(' with a '),write( 'gun?'),!.
+		write(' with a '),validweapon(W),write(W),write('?'),!.
 		/* select random weapon from valid ones later */
 
 
 suggest(T) :- stub(T). /*check history and suggested + heuristic used here */
 
+subtract(X,Y,Z) :- Z is X - Y.
+
+createPlayerList(1) :- assert(playerlist(1)),!.
+createPlayerList(N) :- not(playerlist(N)),assert(playerlist(N)),
+						subtract(N,1,Z),createPlayerList(Z).
+
 
 /* Fill this in when someone suggests */
 /* Later on can keep track of whether the card was shown or not */
-issuggested([Person,Room,Weapon,Player]) :- assert(suggestion([Person,Room,Weapon,Player])).
+issuggested(Person,Room,Weapon,Player) :-	validsuspect(Person),validroom(Room),
+											validweapon(Weapon),playerlist(Player), 
+											assert(suggestion([Person,Room,Weapon,Player])).
+
 mysuggestion([Person,Room,Weapon]) :- assert(myplay([Person,Room,Weapon])).
 
 shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),
@@ -250,13 +266,16 @@ shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player]
 							validplayer(Player),removeWeaponFromPossibilities(Card),
 							writeln('Clean! Do we have the answer? '),accuse,!.
 
+me :- me(Name),writeln(Name).
+
 showRooms :- forall(validroom(R), writeln(R)).
 
 showWeapons :- forall(validweapon(W), writeln(W)).
 
 showSuspects :- forall(validsuspect(S), writeln(S)).
 
-showPlayers :- forall(validplayer(P), writeln(P)). /* TODO make it print only the numofplayers */
+showPlayers :- forall(playerlist(P),writeln(P)).
+
 
 /* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
 showSuggested :- forall(suggestion(S), writeln(S)).
@@ -276,14 +295,20 @@ showPossiblePeople :- forall(possibleperson(P), writeln(P)).
 showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
 
 
-showall :- 	tab(7),writeln('Suspects:'),
+showall :- 	writeln('--------------------------'),	
+			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('Suspects:'),
 			showSuspects,
 			tab(7),writeln('Rooms:'),
 			showRooms,
 			tab(7),writeln('Weapons:'),
 			showWeapons,nl,
+			tab(7),writeln('MOVES MADE'),
+			writeln('--------------------------'),
 			tab(7),writeln('Suggested:'),
-			showSuggested,
+			showSuggested,nl,
 			tab(7),writeln('My Suggestions:'),
 			showMySuggestions,nl,
 			tab(7),writeln('Shown Cards:'),nl,
@@ -292,7 +317,9 @@ showall :- 	tab(7),writeln('Suspects:'),
 			tab(7),writeln('* Rooms:'),
 			showShownRooms,
 			tab(7),writeln('* Weapons:'),
-			showShownWeapons,
+			showShownWeapons,nl,
+			tab(7),writeln('POSSIBILIES'),
+			writeln('--------------------------'),
 			tab(7),writeln('Possible People:'),
 			showPossiblePeople,
 			tab(7),writeln('Possible Rooms:'),
@@ -338,6 +365,43 @@ removeMyWeapon :- myweapon(W),retract(possibleweapon(W)),!.
 accuse :- foundAll,write('It was '),possibleperson(P), write(P),
 			write(' in the '),possibleroom(R), write(R),
 			write(' with a '),possibleweapon(W), write(W).
+
+
+
+help :- 	writeln('-------------------------'),	
+			tab(2),write('U S E R'),tab(2),write('M A N U A L'),
+			writeln(''),
+			writeln('-------------------------'),
+			writeln('Here are the list of available options:'),
+			writeln(''),
+			tab(3),writeln('	showall:		To view all relevant game information, type: showall.'),
+			writeln(''),
+			tab(3),writeln('	issuggested: 		To record a suggestion made by a player, '),
+			tab(9),writeln('			type: issuggested(<person>,<room>,<weapon>,<player>).'),
+			tab(9),writeln('			Eg. player 1 suggested "scarlet in the kitchen with a gun" '),
+			tab(9),writeln('			would be issugested(scarlet,kitchen,gun,1).'),
+			writeln(''),
+			tab(3),writeln('	mysuggestion:		To your own suggestion, type: '),
+			tab(9),writeln('			mysuggestion(<person>,<room>,<weapon>).'),
+			tab(9),writeln('			Eg. If your suggestion is "scarlet in the kitchen with a gun" '),
+			tab(9),writeln('			type mysuggestion(scarlet,kitchen,gun).'),
+			writeln(''),
+			tab(3),writeln('	shown:			To record a card that was shown to you, type: '),
+			tab(9),writeln('			shown(<name>,<type>,<player>).'),
+			tab(9),writeln('			Eg. player 1 showed "scarlet" = shown(scarlet,person,1).'),
+			writeln(''),
+			tab(3),writeln('	show<TYPE>: 		To view all rooms/suspects/weapons used in this game, type: '),
+			tab(9),writeln('			showRooms. or showSuspects. or showWeapons  respectively.'),
+			writeln(''),
+			tab(3),writeln('	showPlayers:		To view players participating in the game, type: showPlayers.'),
+			writeln(''),
+			tab(3),writeln('	showPossible<TYPE>:	To view all possible rooms/people/weapons type: '),
+			tab(9),writeln('			showPossibleRooms. or showPossiblePeople. or showPossibleWeapons.'),
+			writeln(''),
+			tab(3),writeln('	foundall:		To manually view if the solution has been found, type: foundall.'),
+			writeln(''),
+			tab(3),writeln('	found<TYPE>:		To manually view if any of the components of the solution'), 
+			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.').
 
 
 %roomSuggestion :- 
