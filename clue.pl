@@ -453,8 +453,15 @@ help :- 	writeln('-------------------------'),
 			tab(3),writeln('	foundall:		To manually view if the solution has been found, type: foundall.'),
 			writeln(''),
 			tab(3),writeln('	found<TYPE>:		To manually view if any of the components of the solution'), 
-			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.').
-
+			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.'),
+			writeln(''),
+			tab(3),writeln('	me:			To find what player piece you are on the board, type: me.'),
+			writeln(''),
+			tab(3),writeln('	whereami:		To view what room you are in on the board, type: whereami.'), 
+			writeln(''),
+			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'), 
+			writeln(''),
+			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
 
 
 
