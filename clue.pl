@@ -89,6 +89,8 @@ test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		removeMyRoom, 
 		removeMyPerson, 
 		removeMyWeapon,
+		assert(inroom(start)),
+		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
 		
 test1 :- validateRooms([kitchen,bar,bedroom]),
@@ -104,6 +106,8 @@ test1 :- validateRooms([kitchen,bar,bedroom]),
 		removeMyRoom, 
 		removeMyPerson, 
 		removeMyWeapon,
+		assert(inroom(start)),
+		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
 		
 
@@ -138,6 +142,8 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				removeMyRoom, 
 				removeMyPerson, 
 				removeMyWeapon,
+				assert(inroom(start)),
+				assert(pastroom(start)),
 				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),
@@ -191,6 +197,8 @@ validplayer(6).
 :- dynamic shownweapons/1.
 :- dynamic shownbyme/1.
 :- dynamic myplay/1.
+:- dynamic inroom/1.
+:- dynamic pastroom/1.
 
 :- dynamic possibleroom/1.
 :- dynamic possibleperson/1.
@@ -247,6 +255,15 @@ subtract(X,Y,Z) :- Z is X - Y.
 createPlayerList(1) :- assert(playerlist(1)),!.
 createPlayerList(N) :- not(playerlist(N)),assert(playerlist(N)),
 						subtract(N,1,Z),createPlayerList(Z).
+
+printInRoomSize :- findall(H,inroom(H),Z),length(Z,N),writeln(N).
+
+getInRoomSize :- findall(H,inroom(H),Z),length(Z,N).
+
+movedTo(R) :- retract(inroom(X)), asserta(pastroom(X)),
+				assert(inroom(R)).
+				
+wasin :- forall(pastroom(R),writeln(R)).		
 
 
 /* Fill this in when someone suggests */
@@ -311,6 +328,7 @@ showPossiblePeople :- forall(possibleperson(P), writeln(P)).
 
 showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
 
+whereami :- inroom(R),writeln(R).
 
 showall :- 	writeln('--------------------------'),	
 			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
@@ -348,7 +366,13 @@ showall :- 	writeln('--------------------------'),
 			tab(7),writeln('Possible Rooms:'),
 			showPossibleRooms,
 			tab(7),writeln('Possible Weapons:'),
-			showPossibleWeapons.
+			showPossibleWeapons,
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('You are in room:'),
+			whereami,
+			tab(7),writeln('Before this you were in room:'),
+			wasin,!.
 
 getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
 
