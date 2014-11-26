@@ -196,6 +196,7 @@ validplayer(6).
 :- dynamic shownpeople/1.
 :- dynamic shownweapons/1.
 :- dynamic shownbyme/1.
+:- dynamic notshown/1.
 :- dynamic myplay/1.
 :- dynamic inroom/1.
 :- dynamic pastroom/1.
@@ -289,12 +290,30 @@ shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player]
 							validplayer(Player),removeWeaponFromPossibilities(Card),
 							writeln('Clean! Do we have the answer? '),accuse,!.
 
-shownCard(no,Person,Room,Weapon,Player). /* TODO */
+
+/* THIS STUFF WAS CHANGED SO IT MIGHT BE NOT WORKING RIGHT NOW */
+noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query: Person, Room, Weapon])).
+
+hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
+
+shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). %noShownCard(Person,Room,Weapon,Player). /* TODO */
 shownCard(yes,Person,Room,Weapon,Player) :- 	writeln('Enter the number of the player that showed the card:'),
 												read(N),
+												myplayer(Me),howManyDontHave(Player,Me,N),deduceTheyDontHaveCards(Person,Room,Weapon,N),
 												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
 												
 ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: Player, query: Person,Room,Weapon])).
+
+/*noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query: Person, Room, Weapon])).
+
+%hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
+
+shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). %noShownCard(Person,Room,Weapon,Player).
+shownCard(yes,Person,Room,Weapon,Player) :- 	writeln('Enter the number of the player that showed the card:'),
+												read(N),
+												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
+*/
+
 
 me :- me(Name),writeln(Name).
 
@@ -320,7 +339,9 @@ showShownPeople :-	forall(shownpeople(P), writeln(P)).
 
 showShownWeapons :-	forall(shownweapons(W), writeln(W)).
 
-showShownByMe :-	forall(shownbyme(S), writeln(S)).
+showShownByMe :- forall(shownbyme(S), writeln(S)).
+
+showNotShown :- forall(notshown(C), writeln(C)).
 
 showPossibleRooms :- forall(possibleroom(R), writeln(R)).
 
@@ -329,6 +350,9 @@ showPossiblePeople :- forall(possibleperson(P), writeln(P)).
 showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
 
 whereami :- inroom(R),writeln(R).
+
+
+%hasshown(X) :- shownpeople(X),
 
 showall :- 	writeln('--------------------------'),	
 			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
@@ -358,7 +382,9 @@ showall :- 	writeln('--------------------------'),
 			tab(7),writeln('* Weapons:'),
 			showShownWeapons,nl,
 			tab(0),writeln('By Me:'),
-			showShownByMe,nl,
+			showShownByMe,nl,nl,
+			tab(7),writeln('Not Shown Cards:'),
+			showNotShown,nl,
 			tab(7),writeln('POSSIBILIES'),
 			writeln('--------------------------'),
 			tab(7),writeln('Possible People:'),
