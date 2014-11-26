@@ -3,9 +3,9 @@
 /*
 Requirements:
 
-I need help to play the board game Clue (known as Cluedo in Europe). 
+I need help to play the board game Clue (known as Cluedo in Europe).
 Your job is to build me a Clue Player Assistant using the Prolog programming language.
-The more work that your program does for me while I'm playing -- in other words, the 
+The more work that your program does for me while I'm playing -- in other words, the
 more it makes me look like an expert Clue player -- the better your program is.
 
 ----------------------------------------------------------------------------------------
@@ -14,32 +14,32 @@ Minimum deliverables:
 The program should allow me to:
 >	initialize the game setup easily
 	-	which rooms and weapons are used in
-	-	this version of the game? 
+	-	this version of the game?
 	-	how many players?
-	-	the order of play (whose turn next?) 
+	-	the order of play (whose turn next?)
 	-	which cards am I holding?
 	-	and so on...
 
 The program should allow me to:
 >	keep track of my own play
-	-	I tell the program my suggestion ("I suggested Mrs. White, the rope, and 
+	-	I tell the program my suggestion ("I suggested Mrs. White, the rope, and
 		the kitchen.")
-	-	I tell the program what I learned ("Player X showed me the rope" or "Nobody 
+	-	I tell the program what I learned ("Player X showed me the rope" or "Nobody
 		showed me anything")
-		
+
 The program should allow me to:
 >	see the contents of the database on demand
 >	know when to make an accusation
-	-	"Hey, Kurt, all that's left is Mr. Green, the knife, and the library. 
+	-	"Hey, Kurt, all that's left is Mr. Green, the knife, and the library.
 		Go for it dude!"
-		
+
 The program should also have:
->	easy-to-understand documentation describing what the program can and can't do, 
+>	easy-to-understand documentation describing what the program can and can't do,
 	how to use it, how it works
 >	easy-to-use interface
 
-The program just described would be an electronic note pad, and would be worth a C or 
-maybe a low B, depending on factors such as quality of programming, extensibility, 
+The program just described would be an electronic note pad, and would be worth a C or
+maybe a low B, depending on factors such as quality of programming, extensibility,
 documentation, interface, and maybe other factors. This is easy.
 
 ----------------------------------------------------------------------------------------
@@ -47,19 +47,19 @@ The NEXT level:
 
 In addition to the minimum deliverables, the program should:
 >	take advantage of what can be inferred from the suggestions of other players
-	-	"Player X suggested Miss Scarlet, the candlestick, and the conservatory. Player 
-		Y showed her a card."		
->	tell me which suggestion to make next "You should suggest Col. Mustard, the wrench, 
+	-	"Player X suggested Miss Scarlet, the candlestick, and the conservatory. Player
+		Y showed her a card."
+>	tell me which suggestion to make next "You should suggest Col. Mustard, the wrench,
 	and the billiard room."
 
-This program would be much more than a note pad, and would earn a B to an A, depending 
+This program would be much more than a note pad, and would earn a B to an A, depending
 on the factors noted previously.
 
 ----------------------------------------------------------------------------------------
 The A+ level:
 
 The program should go beyond what's been described so far. Some suggestions:
->	build models of what the other players might know and use the models to assess how 
+>	build models of what the other players might know and use the models to assess how
 	close they might be to winning
 >	advise me to make a suggestion that might throw other players off
 >	other things you might think of.
@@ -72,7 +72,7 @@ The program should go beyond what's been described so far. Some suggestions:
 	+	Same player saying 2 same things and a different 3rd one (eg. a,b,c and a,b,d)
 		they might have cards a,b.
 	+	No cards shown for a set of suggestions! (at least one of the 3 is the right one)
-	
+
 
 */
 
@@ -86,13 +86,13 @@ test :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateMyWeapon(flamethrower),
 		validateMyPlayerNumber(1),
 		validateMe(green),
-		removeMyRoom, 
-		removeMyPerson, 
+		removeMyRoom,
+		removeMyPerson,
 		removeMyWeapon,
 		assert(inroom(start)),
 		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
-		
+
 test1 :- validateRooms([kitchen,bar,bedroom]),
 		validateWeapons([wrench,knife,gun]),
 		validateSuspects([scarlet,plum,peacock]),
@@ -103,17 +103,17 @@ test1 :- validateRooms([kitchen,bar,bedroom]),
 		validateMyWeapon(wrench),
 		validateMyPlayerNumber(1),
 		validateMe(plum),
-		removeMyRoom, 
-		removeMyPerson, 
+		removeMyRoom,
+		removeMyPerson,
 		removeMyWeapon,
 		assert(inroom(start)),
 		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
-		
+
 
 clue :- setUp.
 
-setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
+setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter rooms used (eg. [room1,room2].): '),
 				read(Rooms),
 				validateRooms(Rooms),nl,
@@ -139,8 +139,8 @@ setUp :- 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter which player you are (eg. player2 = 2): '),
 				read(P),
 				validateMyPlayerNumber(P),
-				removeMyRoom, 
-				removeMyPerson, 
+				removeMyRoom,
+				removeMyPerson,
 				removeMyWeapon,
 				assert(inroom(start)),
 				assert(pastroom(start)),
@@ -173,12 +173,12 @@ validplayer(player4).
 validplayer(player5).
 validplayer(player6).*/
 
+validplayer(0).
 validplayer(1).
 validplayer(2).
 validplayer(3).
 validplayer(4).
 validplayer(5).
-validplayer(6).
 
 :- dynamic me/1.
 :- dynamic myperson/1.
@@ -205,6 +205,12 @@ validplayer(6).
 :- dynamic possibleperson/1.
 :- dynamic possibleweapon/1.
 
+:- dynamic hascard/2.
+:- dynamic doesnothavecard/2.
+:- dynamic has1of3cards/4.
+:- dynamic doesnothaveany/4.
+:- dynamic assumenothavecard/2.
+
 validateRooms([]).
 validateRooms([H|T]) :- not(validroom(H)),
 						assert(possibleroom(H)),
@@ -222,7 +228,7 @@ validateSuspects([H|T]) :- validsuspect(H),assert(possibleperson(H)),
 
 validatePlayersNumber(N) :- validplayersnum(N),assert(numofplayers(N)).
 
-validatePlayer(P) :- validplayer(P).
+validatePlayer(P) :- LessOne is P-1, validplayer(LessOne).
 
 validateMe(M) :- validsuspect(M),assert(me(M)),!.
 
@@ -237,12 +243,12 @@ validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
 /* My turn */
 
-validateMe(P) :- assert(myplayer(T)).
+validateMe(P) :- assert(myplayer(T)). %What's this??
 
 processTurn(T,T,P,L) :- assert(myplayer(T)),suggestFirst(P,L),!.
 processTurn(T,Me,P,L).
 suggestFirst(P,L)
-	:- writeln('We are just starting here! Why don\'t you try: '), 
+	:- writeln('We are just starting here! Why don\'t you try: '),
 		write(P),
 		write(' in the '),write(L),
 		write(' with a '),validweapon(W),write(W),write('?'),!.
@@ -263,14 +269,14 @@ getInRoomSize :- findall(H,inroom(H),Z),length(Z,N).
 
 movedTo(R) :- retract(inroom(X)), asserta(pastroom(X)),
 				assert(inroom(R)).
-				
-wasin :- forall(pastroom(R),writeln(R)).		
+
+wasin :- forall(pastroom(R),writeln(R)).
 
 
 /* Fill this in when someone suggests */
 /* Later on can keep track of whether the card was shown or not */
 issuggested(Person,Room,Weapon,Player) :-	validsuspect(Person),validroom(Room),
-											validweapon(Weapon),playerlist(Player), 
+											validweapon(Weapon),playerlist(Player),
 											assert(suggestion([Person,Room,Weapon,Player])),
 											writeln('Were any cards shown after this suggestion?'),
 											read(R),
@@ -297,11 +303,14 @@ noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query:
 hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
 
 shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). %noShownCard(Person,Room,Weapon,Player). /* TODO */
-shownCard(yes,Person,Room,Weapon,Player) :- 	writeln('Enter the number of the player that showed the card:'),
+shownCard(yes,Person,Room,Weapon,Player) :-	writeln('Enter the number of the player that showed the card:'),
 												read(N),
+						writeln('Enter the card shown:'),
+						read(Card),
+						shown(N,Card),
 												myplayer(Me),howManyDontHave(Player,Me,N),deduceTheyDontHaveCards(Person,Room,Weapon,N),
 												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
-												
+
 ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: Player, query: Person,Room,Weapon])).
 
 /*noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query: Person, Room, Weapon])).
@@ -309,12 +318,120 @@ ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: 
 %hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
 
 shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). %noShownCard(Person,Room,Weapon,Player).
-shownCard(yes,Person,Room,Weapon,Player) :- 	writeln('Enter the number of the player that showed the card:'),
+shownCard(yes,Person,Room,Weapon,Player) :-	writeln('Enter the number of the player that showed the card:'),
 												read(N),
 												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
 */
 
+/* ====================================================================================
+   MIKE'S SECTION BUILT ON TOP OF EXISTING STRUCTURE
+   ====================================================================================*/
+validCard(Card) :- validweapon(Card).
+validCard(Card) :- validroom(Card).
+validCard(Card) :- validsuspect(Card).
+cardType(Card,suspect) :- validsuspect(Card).
+cardType(Card,weapon) :- validweapon(Card).
+cardType(Card,room) :- validroom(Card).
 
+shown(P,Card) :- validCard(Card),assert(hascard(P,Card)).
+
+possibilities(Card) :-
+	  validCard(Card),
+	  not(owns(_,Card)),
+	  not((cardType(Card,T),
+	       cardType(OtherCard,T),
+	       not(Card=OtherCard),
+	       confirmed(OtherCard))).
+
+confirmed(Card) :-
+	forall(validplayer(P), logicDoesNotHave(P,Card)).
+
+logicDoesNotHave(P,Card) :- doesnothavecard(P,Card).
+logicDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)). %Maybe don't cut?
+/*logicdoesnothave(P,Card) :-
+	(doesnothaveboth(P,Card,OtherCard);
+	 doesnothaveboth(P,OtherCard,Card)),
+	hascard(P,OtherCard),
+	assert(doesnothavecard(P,Card)).
+Don't want to include because it relies on the assumption that players
+don't ask for cards they own.
+*/
+
+assumeDoesNotHave(P,Card) :- doesnothavecard(P,Card).
+assumeDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)). %Maybe don't cut?
+assumeDoesNothave(P,Card) :-
+	(doesNotHaveBoth(P,Card,OtherCard);
+	 doesNotHaveBoth(P,OtherCard,Card)),
+	hascard(P,OtherCard),
+	assert(doesnothavecard(P,Card)).
+
+doesNotHaveBoth(P,Card1,Card2) :-
+	(doesnothaveany(P,Card,Card1,Card2);
+	doesnothaveany(P,Card1,Card,Card2);
+	doesnothaveany(P,Card1,Card2,Card)),
+	hascard(P,Card).
+
+
+owns(P,Card) :- hascard(P,Card).
+owns(P,Card) :-
+	(hasAtLeastOne(P,Card,OtherCard);
+	 hasAtLeastOne(P,OtherCard,Card)),
+	doesnothavecard(P,OtherCard),
+	assert(hascard(P,Card)).
+
+hasAtLeastOne(P,Card1,Card2) :-
+	(has1of3cards(P,Card,Card1,Card2);
+	has1of3cards(P,Card1,Card,Card2);
+	 has1of3cards(P,Card1,Card2,Card)),
+	doesnothavecard(P,Card).
+
+createSuggestion :-
+	suggestACombination(Card1,Card2,Card3),
+       writeln('May we suggest: '),
+		write(Card1),
+		write(' in the '),write(Card2),
+		write(' with a '),write(Card3),write('?'),!.
+
+suggestACombination(Card1,Card2,Card3) :-
+	cardType(Card1,suspect), possibilities(Card1),
+	cardType(Card2,weapon), possibilities(Card2),
+	cardType(Card3,room), possibilities(Card3).
+
+suggested(Person,Room,Weapon,Player) :-
+	validatePlayer(Player),
+
+	writeln('Were any cards shown after this suggestion? yes/no'),
+	read(R),
+	Base0Player is Player-1,
+	playerShowedCard(R,Person,Room,Weapon,Base0Player).
+
+playerShowedCard(no,Person,Room,Weapon,Player):-
+	%myplayer(Player), %Unneeded I think because we ought to make a suggestion anyways. They know the answer...
+	numofplayers(NumP),
+	ModuloPlayer is Player + 1,
+	NextPlayer is ModuloPlayer mod NumP,
+	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
+	createSuggestion.
+playerShowedCard(yes,Person,Room,Weapon,Player) :-
+	writeln('Enter the number of the player that showed the card:'),
+	read(N),
+	assert(has1of3cards(N,Person,Room,Weapon)),
+	recordDoesNotHave(Player,N,Person,Room,Weapon).
+
+recordDoesNotHave(Suggester,Suggester,_,_,_).
+recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
+	numofplayers(NumP),
+	ModuloPlayer is Player - 1,
+	NextPlayer is ModuloPlayer mod NumP,
+	assert(doesnothavecard(Player,Person)),
+	assert(doesnothavecard(Player,Room)),
+	assert(doesnothavecard(Player,Weapon)),
+	recordDoesNotHave(Suggester,NextPlayer,Person,Room,Weapon).
+
+
+/* ==============================================================================================
+   END SECTION
+==================================================================================================*/
 me :- me(Name),writeln(Name).
 
 showRooms :- forall(validroom(R), writeln(R)).
@@ -354,7 +471,7 @@ whereami :- inroom(R),writeln(R).
 
 %hasshown(X) :- shownpeople(X),
 
-showall :- 	writeln('--------------------------'),	
+showall :-	writeln('--------------------------'),
 			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
 			writeln(''),
 			writeln('--------------------------'),
@@ -441,7 +558,7 @@ accuse :- foundAll,write('It was '),possibleperson(P), write(P),
 
 
 
-help :- 	writeln('-------------------------'),	
+help :-		writeln('-------------------------'),
 			tab(2),write('U S E R'),tab(2),write('M A N U A L'),
 			writeln(''),
 			writeln('-------------------------'),
@@ -449,7 +566,7 @@ help :- 	writeln('-------------------------'),
 			writeln(''),
 			tab(3),writeln('	showall:		To view all relevant game information, type: showall.'),
 			writeln(''),
-			tab(3),writeln('	issuggested: 		To record a suggestion made by a player, '),
+			tab(3),writeln('	issuggested:		To record a suggestion made by a player, '),
 			tab(9),writeln('			type: issuggested(<person>,<room>,<weapon>,<player>).'),
 			tab(9),writeln('			Eg. player 1 suggested "scarlet in the kitchen with a gun" '),
 			tab(9),writeln('			would be issugested(scarlet,kitchen,gun,1).'),
@@ -463,12 +580,12 @@ help :- 	writeln('-------------------------'),
 			tab(9),writeln('			shown(<name>,<type>,<player>).'),
 			tab(9),writeln('			Eg. player 1 showed "scarlet" = shown(scarlet,person,1).'),
 			writeln(''),
-			tab(3),writeln('	shownCard:		To manually input if an unknown card was shown to another player,'), 
+			tab(3),writeln('	shownCard:		To manually input if an unknown card was shown to another player,'),
 			tab(9),writeln('			type: shownCard(<yes/no>,<person>,<room>,<weapon>,<suggester>).'),
 			tab(9),writeln('			Eg. player 1 showed a card to player 2 after a query:'),
 			tab(9),writeln('			"scarlet,kitchen,gun" = shownCard(yes,scarlet,kitchen,gun,2).'),
 			writeln(''),
-			tab(3),writeln('	show<TYPE>: 		To view all rooms/suspects/weapons used in this game, type: '),
+			tab(3),writeln('	show<TYPE>:		To view all rooms/suspects/weapons used in this game, type: '),
 			tab(9),writeln('			showRooms. or showSuspects. or showWeapons  respectively.'),
 			writeln(''),
 			tab(3),writeln('	showPlayers:		To view players participating in the game, type: showPlayers.'),
@@ -478,14 +595,14 @@ help :- 	writeln('-------------------------'),
 			writeln(''),
 			tab(3),writeln('	foundall:		To manually view if the solution has been found, type: foundall.'),
 			writeln(''),
-			tab(3),writeln('	found<TYPE>:		To manually view if any of the components of the solution'), 
+			tab(3),writeln('	found<TYPE>:		To manually view if any of the components of the solution'),
 			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.'),
 			writeln(''),
 			tab(3),writeln('	me:			To find what player piece you are on the board, type: me.'),
 			writeln(''),
-			tab(3),writeln('	whereami:		To view what room you are in on the board, type: whereami.'), 
+			tab(3),writeln('	whereami:		To view what room you are in on the board, type: whereami.'),
 			writeln(''),
-			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'), 
+			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'),
 			writeln(''),
 			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
 
