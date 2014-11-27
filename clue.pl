@@ -232,8 +232,9 @@ validplayer(6).
 :- dynamic hascard/2.
 :- dynamic doesnothavecard/2.
 :- dynamic has1of3cards/4.
-:- dynamic doesnothaveany/4.
+:- dynamic assumedoesnothaveany/4.
 :- dynamic assumenothavecard/2.
+:- dynamic assumehascard/2.
 
 :- dynamic isapossibility/1.
 
@@ -269,7 +270,7 @@ validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
 /* My turn */
 
-validateMe(P) :- assert(myplayer(T)). %What\'s this??
+%validateMe(P) :- assert(myplayer(T)). %What\'s this??
 
 processTurn(T,T,P,L) :- assert(myplayer(T)),suggestFirst(P,L),!.
 processTurn(T,Me,P,L).
@@ -368,33 +369,37 @@ possibilities(Card) :-
 	       cardType(OtherCard,T),
 	       not(Card=OtherCard),
 	       confirmed(OtherCard))).
-	       %assert(isapossibility(Card)).
 
 confirmed(Card) :-
 	forall(validplayer(P), logicDoesNotHave(P,Card)).
 
+likely(Card) :-
+	possibilities(Card),
+	not(assumeOwns(_,Card)),
+	not((cardType(Card,T),
+	       cardType(OtherCard,T),
+	       not(Card=OtherCard),
+	       probable(OtherCard))).
+
+probable(Card) :-
+	forall(validplayer(P), assumeDoesNotHave(P,Card)).
+
 logicDoesNotHave(P,Card) :- doesnothavecard(P,Card).
-logicDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)). %Maybe don't cut?
-/*logicdoesnothave(P,Card) :-
-	(doesnothaveboth(P,Card,OtherCard);
-	 doesnothaveboth(P,OtherCard,Card)),
-	hascard(P,OtherCard),
-	assert(doesnothavecard(P,Card)).
-Don't want to include because it relies on the assumption that players
-don't ask for cards they own.
-*/
+logicDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)).
 
 assumeDoesNotHave(P,Card) :- doesnothavecard(P,Card).
-assumeDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)). %Maybe don't cut?
-assumeDoesNothave(P,Card) :-
+assumeDoesNotHave(P,Card) :- assumenothavecard(P,Card).
+assumeDoesNotHave(P,Card) :- me(P),not(hascard(P,Card)).
+assumeDoesNotHave(P,Card) :-
 	(doesNotHaveBoth(P,Card,OtherCard);
 	 doesNotHaveBoth(P,OtherCard,Card)),
 	hascard(P,OtherCard),
-	assert(assumenothavecard(P,Card)). %assert(doesnothavecard(P,Card)).
+	assert(assumenothavecard(P,Card)).
+
 doesNotHaveBoth(P,Card1,Card2) :-
-	(doesnothaveany(P,Card,Card1,Card2);
-	doesnothaveany(P,Card1,Card,Card2);
-	doesnothaveany(P,Card1,Card2,Card)),
+	(assumedoesnothaveany(P,Card,Card1,Card2);
+	assumedoesnothaveany(P,Card1,Card,Card2);
+	assumedoesnothaveany(P,Card1,Card2,Card)),
 	hascard(P,Card).
 
 
@@ -403,7 +408,47 @@ owns(P,Card) :-
 	(hasAtLeastOne(P,Card,OtherCard);
 	 hasAtLeastOne(P,OtherCard,Card)),
 	doesnothavecard(P,OtherCard),
-	assert(hascard(P,Card)).
+	assert(hascard(P,Card)), clearAssume. %Comment out clearAssume if owns not working, the assume logic is maybe stretching things.
+
+clearAssume :-
+	hascard(P,Card),
+	not(P1=P),
+	foreach(assumehascard(P1,Card),retract(assumehascard(P1,Card))).
+clearAssume :-
+	hascard(P,Card),
+	assumenothavecard(P,Card),
+	retract(assumenothavecard(P,Card)).
+clearAssume.
+
+
+assumeOwns(P,Card) :- hascard(P,Card).
+assumeOwns(P,Card) :- assumehascard(P,Card).
+assumeOwns(P,Card) :-
+	not(P1=P),
+	suggestedBothTwice(P1,Card,Card1,Card2),
+	(has1of3cards(P,Card,Card1,Card2);
+	has1of3cards(P,Card1,Card,Card2);
+	has1of3cards(P,Card1,Card2,Card);
+	has1of3cards(P,Card,Card2,Card1);
+	has1of3cards(P,Card2,Card,Card1);
+	has1of3cards(P,Card2,Card1,Card)),
+	assert(assumehascard(P,Card)).
+
+suggestedBothTwice(P,Card,Card1,Card2) :-
+	(assumedoesnothaveany(P,Card,Card1,Card2);
+	assumedoesnothaveany(P1,Card1,Card,Card2);
+	assumedoesnothaveany(P1,Card1,Card2,Card);
+	assumedoesnothaveany(P1,Card,Card2,Card1);
+	assumedoesnothaveany(P1,Card2,Card1,Card);
+	assumedoesnothaveany(P1,Card2,Card,Card1)),
+	(assumedoesnothaveany(P,X,Card1,Card2);
+	assumedoesnothaveany(P1,Card1,X,Card2);
+	assumedoesnothaveany(P1,Card1,Card2,X);
+	assumedoesnothaveany(P1,X,Card2,Card1);
+	assumedoesnothaveany(P1,Card2,Card1,X);
+	assumedoesnothaveany(P1,Card2,X,Card1)),
+	not(X=Card).
+
 
 hasAtLeastOne(P,Card1,Card2) :-
 	(has1of3cards(P,Card,Card1,Card2);
@@ -411,59 +456,155 @@ hasAtLeastOne(P,Card1,Card2) :-
 	 has1of3cards(P,Card1,Card2,Card)),
 	doesnothavecard(P,Card).
 
+myTurn :-
+	checkAccusation,
+	writeln('Do you want to make a logical suggestion, a tricky suggestion, or a sly suggestion? Enter logical./tricky./sly.'),
+	read(R),
+	myTurn(R).
+myTurn(logical) :- createSuggestion.
+myTurn(tricky) :- createTrickySuggestion.
+myTurn(sly) :- createSlySuggestion.
+
 createSuggestion :-
 	suggestACombination(Card1,Card2,Card3),
+	printSuggestion(Card1,Card2,Card3),!.
+
+printSuggestion(Card1,Card2,Card3) :-
        writeln('May we suggest: '),
 		write(Card1),
 		write(' in the '),write(Card3),
 		write(' with a '),write(Card2),write('?'),!.
 
+% Tricky suggestions insert one of your own cards into a suggestion
+createTrickySuggestion :-
+	myplayer(Me),
+	findall(Card,hascard(Me,Card),List),
+	random_member(RandCard,List),
+	suggestCorrectFormat(RandCard).
+
+% Sly suggestions insert a card owned by the player furthest away from
+% you in play order into a suggestion. If you do not have this info a
+% tricky suggestion is offered instead.
+createSlySuggestion :-
+	myplayer(Me),
+	getNextPlayer(Me,Next),
+	findall(Card,hascard(Next,Card),List),
+	random_member(RandCard,List),
+	suggestCorrectFormat(RandCard).
+createSlySuggestion :-
+	writeln('Not enough info to make a sly suggestion, here is a tricky one instead.'),
+	createTrickySuggestion.
+
+suggestCorrectFormat(Card) :-
+	cardType(Card,suspect),
+	suggestACombination(Card,Card1,Card2),
+	printSuggestion(Card,Card1,Card2).
+suggestCorrectFormat(Card) :-
+	cardType(Card,room),
+	suggestACombination(Card1,Card2,Card),
+	printSuggestion(Card1,Card2,Card).
+suggestCorrectFormat(Card) :-
+	cardType(Card,weapon),
+	suggestACombination(Card1,Card,Card2),
+	printSuggestion(Card1,Card,Card2).
+
+% Avoid suggesting cards we know are the correct answer if possible by
+% using one of our cards, if not possible, use a possible card. If we
+% don't know the answer, guess a likely card. If there aren't any likely
+% cards, guess a possible card.
+%
 suggestACombination(Card1,Card2,Card3) :-
-	cardType(Card1,suspect), possibilities(Card1),
-	cardType(Card2,weapon), possibilities(Card2),
-	cardType(Card3,room), possibilities(Card3).
+	suggestSuspect(Card1), suggestRoom(Card2), suggestWeapon(Card3).
 
+% Complicated version.
+/*
+suggestACombination(Card1,Card2,Card3) :-
+	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!, %lock Prolog into the likely card
+	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)),!,
+	cardType(Card3,room), likely(Card3), not(checkRoom(Card3)).
+suggestACombination(Card1,Card2,Card3) :-
+	cardType(Card3,room), likely(Card3), not(checkRoom(Card3)),!,
+	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!,
+	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)).
+suggestACombination(Card1,Card2,Card3) :-
+	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)),!,
+	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!,
+	cardType(Card3,room), likely(Card3),  not(checkRoom(Card3)).
+suggestACombination(Card1,Card2,Card3) :-
+	cardType(Card1,suspect), possibilities(Card1), not(checkPerson(Card1)),
+	cardType(Card2,weapon), possibilities(Card2), not(checkWeapon(Card2)),
+	cardType(Card3,room), possibilities(Card3), not(checkRoom(Card3)).
+suggestACombination(Card1,Card2,Card3) :-
+	myplayer(Me),
+	cardType(Card1,suspect), hascard(Me,Card1), possibilities(Card1),
+	cardType(Card2,weapon), hascard(Me,Card2), possibilities(Card2),
+	cardType(Card3,room), hascard(Me,Card3), possibilities(Card3).
+*/
+
+suggestSuspect(Card) :-
+	checkPerson(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+suggestSuspect(Card) :-
+	checkPerson(Card1), cardType(Card,suspect), possibilities(Card), not(Card=Card1).
+suggestSuspect(Card) :-
+	cardType(Card,suspect), likely(Card).
+suggestSuspect(Card) :-
+	cardType(Card,suspect), possibilities(Card).
+
+suggestRoom(Card) :-
+	checkRoom(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+suggestRoom(Card) :-
+	checkRoom(Card1), cardType(Card,room), possibilities(Card), not(Card=Card1).
+suggestRoom(Card) :-
+	cardType(Card,room), likely(Card).
+suggestRoom(Card) :-
+	cardType(Card,room), possibilities(Card).
+
+suggestWeapon(Card) :-
+	checkWeapon(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+suggestWeapon(Card) :-
+	checkWeapon(Card1), cardType(Card,weapon), possibilities(Card), not(Card=Card1).
+suggestWeapon(Card) :-
+	cardType(Card,weapon), likely(Card).
+suggestWeapon(Card) :-
+	cardType(Card,weapon), possibilities(Card).
+
+% Enter the next suggestion.
 suggested(Person,Room,Weapon,Player) :-
-	validatePlayer(Player),
-
+	validplayer(Player),
+	validroom(Room),
+	validweapon(Weapon),
+	validsuspect(Person),
+	assert(assumedoesnothaveany(Player,Person,Room,Weapon)),
 	writeln('Were any cards shown after this suggestion? yes/no'),
 	read(R),
-	playerShowedCard(R,Person,Room,Weapon,Player),!.
+	playerShowedCard(R,Person,Room,Weapon,Player),
+	checkAccusation,!.
 
 playerShowedCard(no,Person,Room,Weapon,Player):-
-	%myplayer(Player), %Unneeded I think because we ought to make a suggestion anyways. They know the answer...
-	numofplayers(NumP),
-	%ModuloPlayer is Player - 2,
-	getNextPlayer(Player,NumP,NextPlayer),
+	getNextPlayer(Player,NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
 	checkAccusation.
 playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	myplayer(Player),
 	writeln('Enter the number of the player that showed the card:'),
 	read(N),
-	numofplayers(NumP),
-	%M is N-2,
-	getNextPlayer(N,NumP,NextPlayer),
-	assert(has1of3cards(N,Person,Room,Weapon)),	
+	writeln('Which card were you shown?'),
+	read(Card),
+	shown(N,Card),
+	getNextPlayer(N,NextPlayer),
+	assert(has1of3cards(N,Person,Room,Weapon)),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon).
 playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	writeln('Enter the number of the player that showed the card:'),
 	read(N),
-	numofplayers(NumP),
-	%M is N-2,
-	getNextPlayer(N,NumP,NextPlayer),
+	getNextPlayer(N,NextPlayer),
 	assert(has1of3cards(N,Person,Room,Weapon)),
-	writeln('Player is: '),writeln(Player),writeln(' Next player is: '),writeln(NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon).
 
 
 recordDoesNotHave(Suggester,Suggester,_,_,_).
 recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
-	numofplayers(NumP),
-	%M is N-2,
-	getNextPlayer(Player,NumP,NextPlayer),
-	writeln('Removed card: '), writeln(Person), writeln(Room), writeln(Weapon),
-	writeln('From Player: '), writeln(Player),
+	getNextPlayer(Player,NextPlayer),
 	assert(doesnothavecard(Player,Person)),
 	assert(doesnothavecard(Player,Room)),
 	assert(doesnothavecard(Player,Weapon)),
@@ -472,10 +613,83 @@ recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
 
 modulo(M,N,Z) :- Z is mod(M,N).
 
+getNextPlayer(P,Next) :-
+	numofplayers(N),
+	subtract(P,2,M),
+	modulo(M,N,I),
+	Next is I+1.
 
-getNextPlayer(P,N,Next) :- subtract(P,2,M),modulo(M,N,I),Next is I+1.
+checkAccusation :-
+	checkAccuse(Person,Room,Weapon),
+	writeln('Accuse: '),
+		write(Person),
+		write(' in the '),write(Room),
+		write(' with a '),write(Weapon),write('!'),!.
+checkAccusation :-
+	checkPerson(Person),
+	writeln('We know whodunnit: '),
+	write(Person).
+checkAccusation :-
+	checkRoom(Room),
+	writeln('We know where it was done: '),
+	write(Room).
+checkAccusation :-
+	checkWeapon(Weapon),
+	writeln('We know the weapon: '),
+	write(Weapon).
+checkAccusation.
 
+checkPerson(Person) :-
+	cardType(Person,suspect),
+	possibilities(Person),
+	not(cardType(OtherPerson,suspect),
+	    possibilities(OtherPerson),
+	    not(Person=OtherPerson)).
 
+checkRoom(Room) :-
+	cardType(Room,room),
+	possibilities(Room),
+	not(cardType(OtherRoom,room),
+	    possibilities(OtherRoom),
+	    not(Room=OtherRoom)).
+
+checkWeapon(Weapon) :-
+	cardType(Weapon,weapon),
+	possibilities(Weapon),
+	not(cardType(OtherWeapon,weapon),
+	    possibilities(OtherWeapon),
+	    not(Weapon=OtherWeapon)).
+
+checkAccuse(Person,Room,Weapon) :-
+	checkPerson(Person),
+	checkRoom(Room),
+	checkWeapon(Weapon).
+/*
+	cardType(Person,person),
+	cardType(Room,room),
+	cardType(Weapon,weapon),
+%	confirmed(Person), %these do not quite work logically
+	%confirmed(Room),
+	%confirmed(Weapon).
+	possibilities(Person),
+	not(cardType(OtherPerson,person),
+	    possibilities(OtherPerson),
+	    not(Person=OtherPerson)),
+	possibilities(Room),
+	not(cardType(OtherRoom,room),
+	    possibilities(OtherRoom),
+	    not(Room=OtherRoom)),
+	possibilities(Weapon),
+	not(cardType(OtherWeapon,weapon),
+	    possibilities(OtherWeapon),
+	    not(Weapon=OtherWeapon)).
+*/
+
+showPossible :-
+	forall(possibilities(Card),writeln(Card)),!.
+
+showLikely :-
+	forall(likely(Card),writeln(Card)),!.
 
 /* ==============================================================================================
    END SECTION
