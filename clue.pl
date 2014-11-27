@@ -127,6 +127,7 @@ test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		assert(hascard(1,bar)),
 		assert(hascard(1,mustard)),
 		assert(hascard(1,flamethrower)),
+		assert(hascard(1,rope)),
 		assert(inroom(start)),
 		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
@@ -475,9 +476,20 @@ myTurn(logical) :- createSuggestion.
 myTurn(tricky) :- createTrickySuggestion.
 myTurn(sly) :- createSlySuggestion.
 
+otherTurn :-
+	writeln('Whose turn is it?'),
+	read(Player),
+	writeln('Please enter the suspect they suggested: '),
+	read(Person),
+	writeln('Now the suggested room: '),
+	read(Room),
+	writeln('Now the suggested weapon: '),
+	read(Weapon),!,
+	suggested(Person,Room,Weapon,Player).
+
 createSuggestion :-
 	suggestACombination(Card1,Card2,Card3),
-	printSuggestion(Card1,Card2,Card3),!.
+	printSuggestion(Card1,Card3,Card2),!.
 
 printSuggestion(Card1,Card2,Card3) :-
        writeln('May we suggest: '),
@@ -508,7 +520,7 @@ createSlySuggestion :-
 suggestCorrectFormat(Card) :-
 	cardType(Card,suspect),
 	suggestACombination(Card,Card1,Card2),
-	printSuggestion(Card,Card1,Card2).
+	printSuggestion(Card,Card2,Card1).
 suggestCorrectFormat(Card) :-
 	cardType(Card,room),
 	suggestACombination(Card1,Card,Card2),
