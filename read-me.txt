@@ -1,0 +1,36 @@
+Students: 
+Nadine Bolotov
+Mike Fink
+
+Additional Clue Functions Implemented:
+
+Aside from general minimum requirements functionality, our clue program also implements the following functions:
+
+- Keeps track of what cards each player holds based on suggestions they made, whether the cards were shown or not and which cards they’ve shown us.
+
+- Infers what other players might know by deducing other player’s cards based on which player displayed their cards when the suggestion was made (for instance, player1 suggested 3 cards, player3 showed cards, player2 didn’t - therefore player2 didn’t have any of those suggested cards).
+
+- Tells us which 3 cards to suggest when it is our turn based on eliminating unworthy cards from possibilities. We avoid suggesting the cards we know are in the envelope so we don’t give more info to others.
+
+
+- We implemented 3 kinds of suggestions: logical, tricky and sly. Logical simply suggests the next logical step; it may give away what we know. Tricky suggestions inserts one of our own cards into the suggestion which may confuse some players into thinking we know the other two cards (eg. player1 is us and we suggested 3 cards one of which is our own. There are 3 people playing and player3 showed one of these cards. Now player2 and player3 will think the other two they didn’t have are the cards in the envelope but we know one of them isn’t). Sly suggestion makes one of the cards in the suggestion be a card owned by the player furthest away from you in play order. This way if none of the two other cards are shown and this furthest player shows the card they’ve already shown to us, we know that the players before them didn’t have the two other cards (eg. 4 players, we player1 (us) suggest a sly combo and player4 shows us the card they’ve previously shown, then player2 and player3 don’t have the two other cards).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Bibliography:
