@@ -149,21 +149,21 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				read(Players),
 				validatePlayersNumber(Players),
 				createPlayerList(Players),
-				write_ln('Please enter your PERSON card: '),
-				read(PCard),
-				validateMyPerson(PCard),
-				write_ln('Please enter your LOCATION card: '),
-				read(LCard),
-				validateMyLocation(LCard),
-				write_ln('Please enter your WEAPON card: '),
-				read(WCard),
-				validateMyWeapon(WCard),
-				write_ln('Please enter whose turn it is (eg. player1 = 1): '),
-				read(Turn),
-				validatePlayer(Turn),
 				write_ln('Please enter which player you are (eg. player2 = 2): '),
 				read(P),
 				validateMyPlayerNumber(P),
+				write_ln('Please enter your PERSON cards: '),
+				read(PCard),
+				validateMyPeople(PCard),
+				write_ln('Please enter your LOCATION cards: '),
+				read(LCard),
+				validateMyLocations(LCard),
+				write_ln('Please enter your WEAPON cards: '),
+				read(WCard),
+				validateMyWeapons(WCard),
+				write_ln('Please enter whose turn it is (eg. player1 = 1): '),
+				read(Turn),
+				validatePlayer(Turn),
 				removeMyRoom,
 				removeMyPerson,
 				removeMyWeapon,
@@ -172,7 +172,7 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),
-				write_ln('Game initialized! To view the full list of instructions type: help.'),
+				write_ln('Game initialized! To view the full list of instructions type: help.\nIf it is your turn, type myTurn. If it is another player\'s turn type otherTurn.'),
 				processTurn(Turn, P,PCard,LCard),!.
 
 
@@ -190,13 +190,6 @@ validplayersnum(3).
 validplayersnum(4).
 validplayersnum(5).
 validplayersnum(6).
-
-/*validplayer(player1).
-validplayer(player2).
-validplayer(player3).
-validplayer(player4).
-validplayer(player5).
-validplayer(player6).*/
 
 validplayer(1).
 validplayer(2).
@@ -262,11 +255,23 @@ validateMe(M) :- validsuspect(M),assert(me(M)),!.
 
 validateMyPlayerNumber(N) :- validatePlayer(N),assert(myplayer(N)).
 
-validateMyPerson(S) :- validsuspect(S),assert(myperson(S)).
+validateMyPeople([]).
+validateMyPeople([H|T]) :- validateMyPerson(H), validateMyPeople(T).
 
-validateMyLocation(L) :- validroom(L),assert(myroom(L)).
+validateMyPerson(S) :- validsuspect(S),assert(myperson(S)),
+	myplayer(Player),assert(hascard(Player,S)).
 
-validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
+validateMyLocations([]).
+validateMyLocations([H|T]) :- validateMyLocation(H), validateMyLocations(T).
+
+validateMyLocation(L) :- validroom(L),assert(myroom(L)),
+	myplayer(Player),assert(hascard(Player,L)).
+
+validateMyWeapons([]).
+validateMyWeapons([H|T]) :- validateMyWeapon(H), validateMyWeapons(T).
+
+validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)),
+	myplayer(Player),assert(hascard(Player,W)).
 
 
 /* My turn */
