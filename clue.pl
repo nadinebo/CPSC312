@@ -76,43 +76,6 @@ The program should go beyond what's been described so far. Some suggestions:
 
 */
 
-test :- validateRooms([kitchen,bar,bedroom,garage,library]),
-		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
-		validatePlayersNumber(3),
-		createPlayerList(3),
-		validateMyPerson(mustard),
-		validateMyLocation(bar),
-		validateMyWeapon(flamethrower),
-		validateMyPlayerNumber(1),
-		validateMe(green),
-		removeMyRoom,
-		removeMyPerson,
-		removeMyWeapon,
-		assert(inroom(start)),
-		assert(pastroom(start)),
-		write_ln('Game initialized! To view the full list of instructions type: help.').
-
-test1 :- validateRooms([kitchen,bar,bedroom]),
-		validateWeapons([wrench,knife,gun]),
-		validateSuspects([scarlet,plum,peacock]),
-		validatePlayersNumber(2),
-		createPlayerList(2),
-		validateMyPerson(scarlet),
-		validateMyLocation(bar),
-		validateMyWeapon(wrench),
-		validateMyPlayerNumber(1),
-		validateMe(plum),
-		removeMyRoom,
-		removeMyPerson,
-		removeMyWeapon,
-		assert(inroom(start)),
-		assert(pastroom(start)),
-		write_ln('Game initialized! To view the full list of instructions type: help.').
-
-
-
-
 test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
@@ -131,9 +94,6 @@ test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		assert(inroom(start)),
 		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
-
-
-
 
 
 clue :- setUp.
@@ -164,16 +124,12 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter whose turn it is (eg. player1 = 1): '),
 				read(Turn),
 				validatePlayer(Turn),
-				removeMyRoom,
-				removeMyPerson,
-				removeMyWeapon,
 				assert(inroom(start)),
 				assert(pastroom(start)),
-				write_ln('Please enter your player\'s name (your piece on the board): '),
+				write_ln('Please enter your character name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),
-				write_ln('Game initialized! To view the full list of instructions type: help.\nIf it is your turn, type myTurn. If it is another player\'s turn type otherTurn.'),
-				processTurn(Turn, P,PCard,LCard),!.
+				write_ln('Game initialized! To view the full list of instructions type: help.\nIf it is your turn, type myTurn. If it is another player\'s turn type otherTurn.'),!.
 
 
 stub(_).
