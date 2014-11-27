@@ -111,6 +111,30 @@ test1 :- validateRooms([kitchen,bar,bedroom]),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
 
 
+
+
+test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
+		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
+		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
+		validatePlayersNumber(3),
+		createPlayerList(3),
+		validateMyPerson(mustard),
+		validateMyLocation(bar),
+		validateMyWeapon(flamethrower),
+		validateMyWeapon(rope),
+		validateMyPlayerNumber(1),
+		validateMe(green),
+		assert(hascard(1,bar)),
+		assert(hascard(1,mustard)),
+		assert(hascard(1,flamethrower)),
+		assert(inroom(start)),
+		assert(pastroom(start)),
+		write_ln('Game initialized! To view the full list of instructions type: help.').
+
+
+
+
+
 clue :- setUp.
 
 setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
@@ -173,12 +197,12 @@ validplayer(player4).
 validplayer(player5).
 validplayer(player6).*/
 
-validplayer(0).
 validplayer(1).
 validplayer(2).
 validplayer(3).
 validplayer(4).
 validplayer(5).
+validplayer(6).
 
 :- dynamic me/1.
 :- dynamic myperson/1.
@@ -211,6 +235,8 @@ validplayer(5).
 :- dynamic doesnothaveany/4.
 :- dynamic assumenothavecard/2.
 
+:- dynamic isapossibility/1.
+
 validateRooms([]).
 validateRooms([H|T]) :- not(validroom(H)),
 						assert(possibleroom(H)),
@@ -228,7 +254,7 @@ validateSuspects([H|T]) :- validsuspect(H),assert(possibleperson(H)),
 
 validatePlayersNumber(N) :- validplayersnum(N),assert(numofplayers(N)).
 
-validatePlayer(P) :- LessOne is P-1, validplayer(LessOne).
+validatePlayer(P) :- validplayer(P).
 
 validateMe(M) :- validsuspect(M),assert(me(M)),!.
 
@@ -243,7 +269,7 @@ validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
 /* My turn */
 
-validateMe(P) :- assert(myplayer(T)). %What's this??
+validateMe(P) :- assert(myplayer(T)). %What\'s this??
 
 processTurn(T,T,P,L) :- assert(myplayer(T)),suggestFirst(P,L),!.
 processTurn(T,Me,P,L).
@@ -342,6 +368,7 @@ possibilities(Card) :-
 	       cardType(OtherCard,T),
 	       not(Card=OtherCard),
 	       confirmed(OtherCard))).
+	       %assert(isapossibility(Card)).
 
 confirmed(Card) :-
 	forall(validplayer(P), logicDoesNotHave(P,Card)).
@@ -363,8 +390,7 @@ assumeDoesNothave(P,Card) :-
 	(doesNotHaveBoth(P,Card,OtherCard);
 	 doesNotHaveBoth(P,OtherCard,Card)),
 	hascard(P,OtherCard),
-	assert(doesnothavecard(P,Card)).
-
+	assert(assumenothavecard(P,Card)). %assert(doesnothavecard(P,Card)).
 doesNotHaveBoth(P,Card1,Card2) :-
 	(doesnothaveany(P,Card,Card1,Card2);
 	doesnothaveany(P,Card1,Card,Card2);
@@ -389,8 +415,8 @@ createSuggestion :-
 	suggestACombination(Card1,Card2,Card3),
        writeln('May we suggest: '),
 		write(Card1),
-		write(' in the '),write(Card2),
-		write(' with a '),write(Card3),write('?'),!.
+		write(' in the '),write(Card3),
+		write(' with a '),write(Card2),write('?'),!.
 
 suggestACombination(Card1,Card2,Card3) :-
 	cardType(Card1,suspect), possibilities(Card1),
@@ -402,36 +428,83 @@ suggested(Person,Room,Weapon,Player) :-
 
 	writeln('Were any cards shown after this suggestion? yes/no'),
 	read(R),
-	Base0Player is Player-1,
-	playerShowedCard(R,Person,Room,Weapon,Base0Player).
+	playerShowedCard(R,Person,Room,Weapon,Player),!.
 
 playerShowedCard(no,Person,Room,Weapon,Player):-
 	%myplayer(Player), %Unneeded I think because we ought to make a suggestion anyways. They know the answer...
 	numofplayers(NumP),
-	ModuloPlayer is Player + 1,
-	NextPlayer is ModuloPlayer mod NumP,
+	%ModuloPlayer is Player - 2,
+	getNextPlayer(Player,NumP,NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
-	createSuggestion.
+	checkAccusation.
+playerShowedCard(yes,Person,Room,Weapon,Player) :-
+	myplayer(Player),
+	writeln('Enter the number of the player that showed the card:'),
+	read(N),
+	numofplayers(NumP),
+	%M is N-2,
+	getNextPlayer(N,NumP,NextPlayer),
+	assert(has1of3cards(N,Person,Room,Weapon)),	
+	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon).
 playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	writeln('Enter the number of the player that showed the card:'),
 	read(N),
+	numofplayers(NumP),
+	%M is N-2,
+	getNextPlayer(N,NumP,NextPlayer),
 	assert(has1of3cards(N,Person,Room,Weapon)),
-	recordDoesNotHave(Player,N,Person,Room,Weapon).
+	writeln('Player is: '),writeln(Player),writeln(' Next player is: '),writeln(NextPlayer),
+	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon).
+
 
 recordDoesNotHave(Suggester,Suggester,_,_,_).
 recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
 	numofplayers(NumP),
-	ModuloPlayer is Player - 1,
-	NextPlayer is ModuloPlayer mod NumP,
+	%M is N-2,
+	getNextPlayer(Player,NumP,NextPlayer),
+	writeln('Removed card: '), writeln(Person), writeln(Room), writeln(Weapon),
+	writeln('From Player: '), writeln(Player),
 	assert(doesnothavecard(Player,Person)),
 	assert(doesnothavecard(Player,Room)),
 	assert(doesnothavecard(Player,Weapon)),
 	recordDoesNotHave(Suggester,NextPlayer,Person,Room,Weapon).
 
 
+modulo(M,N,Z) :- Z is mod(M,N).
+
+
+getNextPlayer(P,N,Next) :- subtract(P,2,M),modulo(M,N,I),Next is I+1.
+
+
+
 /* ==============================================================================================
    END SECTION
 ==================================================================================================*/
+
+/*------------------------------------------------------
+	I added here:
+--------------------------------------------------------*/
+
+
+%addToPossibilites([H|T]) :- not(isapossibility(H)), possibilites(H),
+
+
+%checkAccusation :- (isapossibility(H)),
+
+%checkAccusation :- (findall(H,isapossibility(H),Z),length(Z,N) =:= 3.
+
+%printPossiblePeopleSize :- findall(H,possibleperson(H),Z),length(Z,N),writeln(N).
+
+%showpos :- forall(isapossibility(C),writeln(C)).
+
+
+
+
+
+/*------------------------------------------------------
+	Ends here
+--------------------------------------------------------*/
+
 me :- me(Name),writeln(Name).
 
 showRooms :- forall(validroom(R), writeln(R)).
