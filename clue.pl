@@ -1,4 +1,5 @@
 /* Clue */
+/* Students: Nadine Bolotov and Mike Fink */
 /* Due Date: Thursday, November 27th, 12:00pm, use handin project2 */
 /*
 Requirements:
@@ -149,21 +150,21 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				read(Players),
 				validatePlayersNumber(Players),
 				createPlayerList(Players),
-				write_ln('Please enter which player you are (eg. player2 = 2): '),
-				read(P),
-				validateMyPlayerNumber(P),
-				write_ln('Please enter your PERSON cards: '),
+				write_ln('Please enter your PERSON card: '),
 				read(PCard),
-				validateMyPeople(PCard),
-				write_ln('Please enter your LOCATION cards: '),
+				validateMyPerson(PCard),
+				write_ln('Please enter your LOCATION card: '),
 				read(LCard),
-				validateMyLocations(LCard),
-				write_ln('Please enter your WEAPON cards: '),
+				validateMyLocation(LCard),
+				write_ln('Please enter your WEAPON card: '),
 				read(WCard),
-				validateMyWeapons(WCard),
+				validateMyWeapon(WCard),
 				write_ln('Please enter whose turn it is (eg. player1 = 1): '),
 				read(Turn),
 				validatePlayer(Turn),
+				write_ln('Please enter which player you are (eg. player2 = 2): '),
+				read(P),
+				validateMyPlayerNumber(P),
 				removeMyRoom,
 				removeMyPerson,
 				removeMyWeapon,
@@ -172,11 +173,9 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter your player\'s name (your piece on the board): '),
 				read(Me),
 				validateMe(Me),
-				write_ln('Game initialized! To view the full list of instructions type: help.\nIf it is your turn, type myTurn. If it is another player\'s turn type otherTurn.'),
+				write_ln('Game initialized! To view the full list of instructions type: help.'),
 				processTurn(Turn, P,PCard,LCard),!.
 
-
-stub(_).
 
 validsuspect(scarlet).
 validsuspect(plum).
@@ -190,6 +189,7 @@ validplayersnum(3).
 validplayersnum(4).
 validplayersnum(5).
 validplayersnum(6).
+
 
 validplayer(1).
 validplayer(2).
@@ -255,23 +255,11 @@ validateMe(M) :- validsuspect(M),assert(me(M)),!.
 
 validateMyPlayerNumber(N) :- validatePlayer(N),assert(myplayer(N)).
 
-validateMyPeople([]).
-validateMyPeople([H|T]) :- validateMyPerson(H), validateMyPeople(T).
+validateMyPerson(S) :- validsuspect(S),assert(myperson(S)).
 
-validateMyPerson(S) :- validsuspect(S),assert(myperson(S)),
-	myplayer(Player),assert(hascard(Player,S)).
+validateMyLocation(L) :- validroom(L),assert(myroom(L)).
 
-validateMyLocations([]).
-validateMyLocations([H|T]) :- validateMyLocation(H), validateMyLocations(T).
-
-validateMyLocation(L) :- validroom(L),assert(myroom(L)),
-	myplayer(Player),assert(hascard(Player,L)).
-
-validateMyWeapons([]).
-validateMyWeapons([H|T]) :- validateMyWeapon(H), validateMyWeapons(T).
-
-validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)),
-	myplayer(Player),assert(hascard(Player,W)).
+validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)).
 
 
 /* My turn */
@@ -287,8 +275,6 @@ suggestFirst(P,L)
 		write(' with a '),validweapon(W),write(W),write('?'),!.
 		/* select random weapon from valid ones later */
 
-
-suggest(T) :- stub(T). /*check history and suggested + heuristic used here */
 
 subtract(X,Y,Z) :- Z is X - Y.
 
@@ -306,8 +292,6 @@ movedTo(R) :- retract(inroom(X)), asserta(pastroom(X)),
 wasin :- forall(pastroom(R),writeln(R)).
 
 
-/* Fill this in when someone suggests */
-/* Later on can keep track of whether the card was shown or not */
 issuggested(Person,Room,Weapon,Player) :-	validsuspect(Person),validroom(Room),
 											validweapon(Weapon),playerlist(Player),
 											assert(suggestion([Person,Room,Weapon,Player])),
@@ -346,19 +330,7 @@ shownCard(yes,Person,Room,Weapon,Player) :-	writeln('Enter the number of the pla
 
 ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: Player, query: Person,Room,Weapon])).
 
-/*noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query: Person, Room, Weapon])).
 
-%hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
-
-shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). %noShownCard(Person,Room,Weapon,Player).
-shownCard(yes,Person,Room,Weapon,Player) :-	writeln('Enter the number of the player that showed the card:'),
-												read(N),
-												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
-*/
-
-/* ====================================================================================
-   MIKE'S SECTION BUILT ON TOP OF EXISTING STRUCTURE
-   ====================================================================================*/
 validCard(Card) :- validweapon(Card).
 validCard(Card) :- validroom(Card).
 validCard(Card) :- validsuspect(Card).
@@ -366,7 +338,7 @@ cardType(Card,suspect) :- validsuspect(Card).
 cardType(Card,weapon) :- validweapon(Card).
 cardType(Card,room) :- validroom(Card).
 
-shown(P,Card) :- validCard(Card),assert(hascard(P,Card)).
+shown(P,Card) :- validCard(Card),assert(showncards([P,Card])),assert(hascard(P,Card)).
 
 possibilities(Card) :-
 	  validCard(Card),
@@ -475,26 +447,17 @@ myTurn :-
 	read(Weapon),
 	writeln('Make your suggestion to the other players!'),!,
 	myplayer(Me),
+	/**/
+	assert(myplay([Person,Room,Weapon])),
 	suggested(Suspect,Room,Weapon,Me).
 
 myTurn(logical) :- createSuggestion.
 myTurn(tricky) :- createTrickySuggestion.
 myTurn(sly) :- createSlySuggestion.
 
-otherTurn :-
-	writeln('Whose turn is it?'),
-	read(Player),
-	writeln('Please enter the suspect they suggested: '),
-	read(Person),
-	writeln('Now the suggested room: '),
-	read(Room),
-	writeln('Now the suggested weapon: '),
-	read(Weapon),!,
-	suggested(Person,Room,Weapon,Player).
-
 createSuggestion :-
 	suggestACombination(Card1,Card2,Card3),
-	printSuggestion(Card1,Card3,Card2),!.
+	printSuggestion(Card1,Card2,Card3),!.
 
 printSuggestion(Card1,Card2,Card3) :-
        writeln('May we suggest: '),
@@ -502,16 +465,16 @@ printSuggestion(Card1,Card2,Card3) :-
 		write(' in the '),write(Card3),
 		write(' with a '),write(Card2),write('?\n'),!.
 
-% Tricky suggestions insert one of your own cards into a suggestion
+/* Tricky suggestions insert one of your own cards into a suggestion */
 createTrickySuggestion :-
 	myplayer(Me),
 	findall(Card,hascard(Me,Card),List),
 	random_member(RandCard,List),
 	suggestCorrectFormat(RandCard).
 
-% Sly suggestions insert a card owned by the player furthest away from
+/* Sly suggestions insert a card owned by the player furthest away from
 % you in play order into a suggestion. If you do not have this info a
-% tricky suggestion is offered instead.
+% tricky suggestion is offered instead. */
 createSlySuggestion :-
 	myplayer(Me),
 	getNextPlayer(Me,Next),
@@ -545,30 +508,7 @@ suggestACombination(Card1,Card2,Card3) :-
 	suggestRoom(Card2),
 	suggestWeapon(Card3).
 
-% Complicated version. Does not seem needed.
-/*
-suggestACombination(Card1,Card2,Card3) :-
-	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!, %lock Prolog into the likely card
-	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)),!,
-	cardType(Card3,room), likely(Card3), not(checkRoom(Card3)).
-suggestACombination(Card1,Card2,Card3) :-
-	cardType(Card3,room), likely(Card3), not(checkRoom(Card3)),!,
-	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!,
-	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)).
-suggestACombination(Card1,Card2,Card3) :-
-	cardType(Card2,weapon), likely(Card2), not(checkWeapon(Card2)),!,
-	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!,
-	cardType(Card3,room), likely(Card3),  not(checkRoom(Card3)).
-suggestACombination(Card1,Card2,Card3) :-
-	cardType(Card1,suspect), possibilities(Card1), not(checkPerson(Card1)),
-	cardType(Card2,weapon), possibilities(Card2), not(checkWeapon(Card2)),
-	cardType(Card3,room), possibilities(Card3), not(checkRoom(Card3)).
-suggestACombination(Card1,Card2,Card3) :-
-	myplayer(Me),
-	cardType(Card1,suspect), hascard(Me,Card1), possibilities(Card1),
-	cardType(Card2,weapon), hascard(Me,Card2), possibilities(Card2),
-	cardType(Card3,room), hascard(Me,Card3), possibilities(Card3).
-*/
+
 
 suggestSuspect(Card) :-
 	checkPerson(Card1), cardType(Card,suspect), myplayer(Me), hascard(Me,Card), not(Card=Card1).
@@ -612,12 +552,16 @@ suggested(Person,Room,Weapon,Player) :-
 	assert(assumedoesnothaveany(Player,Person,Room,Weapon)),
 	writeln('Were any cards shown after this suggestion? yes/no'),
 	read(R),
+	/**/
+	assert(suggestion([Person,Room,Weapon,Player])),
 	playerShowedCard(R,Person,Room,Weapon,Player),
 	checkAccusation,!.
 
 playerShowedCard(no,Person,Room,Weapon,Player):-
 	getNextPlayer(Player,NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
+	/**/
+	assert(notshown([Person,Room,Weapon,Player])),
 	checkAccusation.
 playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	myplayer(Player),
@@ -699,26 +643,7 @@ checkAccuse(Person,Room,Weapon) :-
 	checkPerson(Person),
 	checkRoom(Room),
 	checkWeapon(Weapon).
-/*
-	cardType(Person,person),
-	cardType(Room,room),
-	cardType(Weapon,weapon),
-%	confirmed(Person), %these do not quite work logically
-	%confirmed(Room),
-	%confirmed(Weapon).
-	possibilities(Person),
-	not(cardType(OtherPerson,person),
-	    possibilities(OtherPerson),
-	    not(Person=OtherPerson)),
-	possibilities(Room),
-	not(cardType(OtherRoom,room),
-	    possibilities(OtherRoom),
-	    not(Room=OtherRoom)),
-	possibilities(Weapon),
-	not(cardType(OtherWeapon,weapon),
-	    possibilities(OtherWeapon),
-	    not(Weapon=OtherWeapon)).
-*/
+
 
 showPossible :-
 	forall(possibilities(Card),writeln(Card)),!.
@@ -726,33 +651,11 @@ showPossible :-
 showLikely :-
 	forall(likely(Card),writeln(Card)),!.
 
-/* ==============================================================================================
-   END SECTION
-==================================================================================================*/
 
 /*------------------------------------------------------
-	I added here:
+	Changed this:
 --------------------------------------------------------*/
 
-
-%addToPossibilites([H|T]) :- not(isapossibility(H)), possibilites(H),
-
-
-%checkAccusation :- (isapossibility(H)),
-
-%checkAccusation :- (findall(H,isapossibility(H),Z),length(Z,N) =:= 3.
-
-%printPossiblePeopleSize :- findall(H,possibleperson(H),Z),length(Z,N),writeln(N).
-
-%showpos :- forall(isapossibility(C),writeln(C)).
-
-
-
-
-
-/*------------------------------------------------------
-	Ends here
---------------------------------------------------------*/
 
 me :- me(Name),writeln(Name).
 
@@ -765,7 +668,6 @@ showSuspects :- forall(validsuspect(S), writeln(S)).
 showPlayers :- forall(playerlist(P),writeln(P)).
 
 
-/* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
 showSuggested :- forall(suggestion(S), writeln(S)).
 
 showMySuggestions :- forall(myplay(S), writeln(S)).
@@ -791,7 +693,6 @@ showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
 whereami :- inroom(R),writeln(R).
 
 
-%hasshown(X) :- shownpeople(X),
 
 showall :-	writeln('--------------------------'),
 			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
@@ -807,37 +708,29 @@ showall :-	writeln('--------------------------'),
 			writeln('--------------------------'),
 			tab(7),writeln('Suggested:'),
 			showSuggested,nl,
-			tab(7),writeln('My Suggestions:'),
-			showMySuggestions,nl,
-			tab(7),writeln('Shown Cards:'),nl,
-			tab(0),writeln('To Others:'),
+		
+			tab(7),writeln('Shown Cards:'),
+	
 			showShownCards,nl,
-			%tab(7),writeln('Shown Cards:'),nl,
-			tab(0),writeln('To Me:'),
-			tab(7),writeln('* People:'),
-			showShownPeople,
-			tab(7),writeln('* Rooms:'),
-			showShownRooms,
-			tab(7),writeln('* Weapons:'),
-			showShownWeapons,nl,
-			tab(0),writeln('By Me:'),
-			showShownByMe,nl,nl,
+		
 			tab(7),writeln('Not Shown Cards:'),
 			showNotShown,nl,
 			tab(7),writeln('POSSIBILIES'),
 			writeln('--------------------------'),
-			tab(7),writeln('Possible People:'),
-			showPossiblePeople,
-			tab(7),writeln('Possible Rooms:'),
-			showPossibleRooms,
-			tab(7),writeln('Possible Weapons:'),
-			showPossibleWeapons,
+			tab(7),writeln('Possible Cards:'),
+			showPossible,
+
+			%tab(7),writeln('Likely Cards:'),
+			%showLikely,
 			writeln(''),
 			writeln('--------------------------'),
 			tab(7),writeln('You are in room:'),
 			whereami,
 			tab(7),writeln('Before this you were in room:'),
-			wasin,!.
+			wasin,
+			writeln(''),
+			writeln('--------------------------------------------------------'),
+			tab(5),writeln('To view the full list of instructions type: help.'),!.
 
 getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
 
@@ -879,8 +772,44 @@ accuse :- foundAll,write('It was '),possibleperson(P), write(P),
 			write(' with a '),possibleweapon(W), write(W).
 
 
-
 help :-		writeln('-------------------------'),
+			tab(2),write('U S E R'),tab(2),write('M A N U A L'),
+			writeln(''),
+			writeln('-------------------------'),
+			writeln('Here are the list of available options:'),
+			writeln(''),
+			tab(3),writeln('	showall:		To view all relevant game information, type: showall.'),
+			writeln(''),
+			tab(3),writeln('	suggested:		To record a suggestion made by a player, '),
+			tab(9),writeln('			type: suggested(<person>,<room>,<weapon>,<player>).'),
+			tab(9),writeln('			Eg. player 1 suggested "scarlet in the kitchen with a gun" '),
+			tab(9),writeln('			would be issugested(scarlet,kitchen,gun,1).'),
+		
+			writeln(''),
+			tab(3),writeln('	myTurn:			To get suggestions, type: myTurn.'),
+			writeln(''),
+
+			tab(3),writeln('	showPlayers:		To view players participating in the game, type: showPlayers.'),
+			writeln(''),
+			tab(3),writeln('	showPossible:		To view all possible rooms/people/weapons type: showPossible. '),
+			writeln(''),
+			tab(3),writeln('	showLikely:		To view all likely rooms/people/weapons type: showPossible. '),
+			
+			writeln(''),
+			tab(3),writeln('	me:			To find what player piece you are on the board, type: me.'),
+			writeln(''),
+			tab(3),writeln('	whereami:		To view what room you are in on the board, type: whereami.'),
+			writeln(''),
+			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'),
+			writeln(''),
+			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
+
+
+
+
+
+
+help1 :-		writeln('-------------------------'),
 			tab(2),write('U S E R'),tab(2),write('M A N U A L'),
 			writeln(''),
 			writeln('-------------------------'),
@@ -927,6 +856,56 @@ help :-		writeln('-------------------------'),
 			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'),
 			writeln(''),
 			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
+
+showall1 :-	writeln('--------------------------'),
+			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('Suspects:'),
+			showSuspects,
+			tab(7),writeln('Rooms:'),
+			showRooms,
+			tab(7),writeln('Weapons:'),
+			showWeapons,nl,
+			tab(7),writeln('MOVES MADE'),
+			writeln('--------------------------'),
+			tab(7),writeln('Suggested:'),
+			showSuggested,nl,
+			%tab(7),writeln('My Suggestions:'),
+			%showMySuggestions,nl,
+			tab(7),writeln('Shown Cards:'),nl,
+			%tab(0),writeln('To Others:'),
+			showShownCards,nl,
+			%tab(7),writeln('Shown Cards:'),nl,
+			%tab(0),writeln('To Me:'),
+			%tab(7),writeln('* People:'),
+			%showShownPeople,
+			%tab(7),writeln('* Rooms:'),
+			%showShownRooms,
+			%tab(7),writeln('* Weapons:'),
+			%showShownWeapons,nl,
+			%tab(0),writeln('By Me:'),
+			%showShownByMe,nl,nl,
+			tab(7),writeln('Not Shown Cards:'),
+			showNotShown,nl,
+			tab(7),writeln('POSSIBILIES'),
+			writeln('--------------------------'),
+			tab(7),writeln('Possible Cards:'),
+			showPossible,
+			%tab(7),writeln('Possible Rooms:'),
+			%showPossibleRooms,
+			%tab(7),writeln('Possible Weapons:'),
+			%showPossibleWeapons,
+			tab(7),writeln('Likely Cards:'),
+			showLikely,
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('You are in room:'),
+			whereami,
+			tab(7),writeln('Before this you were in room:'),
+			wasin,!.
+
+
 
 
 
