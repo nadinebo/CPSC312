@@ -76,12 +76,12 @@ The program should go beyond what's been described so far. Some suggestions:
 
 */
 
-test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
+/*test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		validateWeapons([wrench,flamethrower,gun,sewingneedle,rope]),
 		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 		validatePlayersNumber(3),
 		createPlayerList(3),
-		validateMyPerson(mustard),
+		validateMyPerson(mustard).
 		validateMyLocation(bar),
 		validateMyWeapon(flamethrower),
 		validateMyWeapon(rope),
@@ -94,7 +94,7 @@ test3 :- validateRooms([kitchen,bar,bedroom,garage,library]),
 		assert(inroom(start)),
 		assert(pastroom(start)),
 		write_ln('Game initialized! To view the full list of instructions type: help.').
-
+*/
 
 clue :- setUp.
 
@@ -568,12 +568,14 @@ suggested(Person,Room,Weapon,Player) :-
 	assert(assumedoesnothaveany(Player,Person,Room,Weapon)),
 	writeln('Were any cards shown after this suggestion? yes/no'),
 	read(R),
+	assert(suggestion([Person,Room,Weapon,Player])),
 	playerShowedCard(R,Person,Room,Weapon,Player),
 	checkAccusation,!.
 
 playerShowedCard(no,Person,Room,Weapon,Player):-
 	getNextPlayer(Player,NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
+	assert(notshown([Person,Room,Weapon,Player])),
 	checkAccusation.
 playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	myplayer(Player),
@@ -763,6 +765,45 @@ showall :-	writeln('--------------------------'),
 			writeln('--------------------------'),
 			tab(7),writeln('Suggested:'),
 			showSuggested,nl,
+		
+			tab(7),writeln('Shown Cards:'),
+	
+			showShownCards,nl,
+		
+			tab(7),writeln('Not Shown Cards:'),
+			showNotShown,nl,
+			tab(7),writeln('POSSIBILIES'),
+			writeln('--------------------------'),
+			tab(7),writeln('Possible Cards:'),
+			showPossible,
+
+			%tab(7),writeln('Likely Cards:'),
+			%showLikely,
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('You are in room:'),
+			whereami,
+			tab(7),writeln('Before this you were in room:'),
+			wasin,
+			writeln(''),
+			writeln('--------------------------------------------------------'),
+			tab(5),writeln('To view the full list of instructions type: help.'),!.
+
+
+showall1 :-	writeln('--------------------------'),
+			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
+			writeln(''),
+			writeln('--------------------------'),
+			tab(7),writeln('Suspects:'),
+			showSuspects,
+			tab(7),writeln('Rooms:'),
+			showRooms,
+			tab(7),writeln('Weapons:'),
+			showWeapons,nl,
+			tab(7),writeln('MOVES MADE'),
+			writeln('--------------------------'),
+			tab(7),writeln('Suggested:'),
+			showSuggested,nl,
 			tab(7),writeln('My Suggestions:'),
 			showMySuggestions,nl,
 			tab(7),writeln('Shown Cards:'),nl,
@@ -844,37 +885,19 @@ help :-		writeln('-------------------------'),
 			writeln(''),
 			tab(3),writeln('	showall:		To view all relevant game information, type: showall.'),
 			writeln(''),
-			tab(3),writeln('	issuggested:		To record a suggestion made by a player, '),
-			tab(9),writeln('			type: issuggested(<person>,<room>,<weapon>,<player>).'),
-			tab(9),writeln('			Eg. player 1 suggested "scarlet in the kitchen with a gun" '),
-			tab(9),writeln('			would be issugested(scarlet,kitchen,gun,1).'),
+			tab(3),writeln('	otherTurn:		To record a suggestion made by a player. '),
+			
+		
 			writeln(''),
-			tab(3),writeln('	mysuggestion:		To your own suggestion, type: '),
-			tab(9),writeln('			mysuggestion(<person>,<room>,<weapon>).'),
-			tab(9),writeln('			Eg. If your suggestion is "scarlet in the kitchen with a gun" '),
-			tab(9),writeln('			type mysuggestion(scarlet,kitchen,gun).'),
+			tab(3),writeln('	myTurn:			To get suggestions, type: myTurn.'),
 			writeln(''),
-			tab(3),writeln('	shown:			To record a card that was shown to you, type: '),
-			tab(9),writeln('			shown(<name>,<type>,<player>).'),
-			tab(9),writeln('			Eg. player 1 showed "scarlet" = shown(scarlet,person,1).'),
-			writeln(''),
-			tab(3),writeln('	shownCard:		To manually input if an unknown card was shown to another player,'),
-			tab(9),writeln('			type: shownCard(<yes/no>,<person>,<room>,<weapon>,<suggester>).'),
-			tab(9),writeln('			Eg. player 1 showed a card to player 2 after a query:'),
-			tab(9),writeln('			"scarlet,kitchen,gun" = shownCard(yes,scarlet,kitchen,gun,2).'),
-			writeln(''),
-			tab(3),writeln('	show<TYPE>:		To view all rooms/suspects/weapons used in this game, type: '),
-			tab(9),writeln('			showRooms. or showSuspects. or showWeapons  respectively.'),
-			writeln(''),
+
 			tab(3),writeln('	showPlayers:		To view players participating in the game, type: showPlayers.'),
 			writeln(''),
-			tab(3),writeln('	showPossible<TYPE>:	To view all possible rooms/people/weapons type: '),
-			tab(9),writeln('			showPossibleRooms. or showPossiblePeople. or showPossibleWeapons.'),
+			tab(3),writeln('	showPossible:		To view all possible rooms/people/weapons type: showPossible. '),
 			writeln(''),
-			tab(3),writeln('	foundall:		To manually view if the solution has been found, type: foundall.'),
-			writeln(''),
-			tab(3),writeln('	found<TYPE>:		To manually view if any of the components of the solution'),
-			tab(9),writeln('			have been found, type: foundPerson. or foundRoom. or foundWeapon.'),
+			tab(3),writeln('	showLikely:		To view all likely rooms/people/weapons type: showPossible. '),
+			
 			writeln(''),
 			tab(3),writeln('	me:			To find what player piece you are on the board, type: me.'),
 			writeln(''),
@@ -883,6 +906,8 @@ help :-		writeln('-------------------------'),
 			tab(3),writeln('	movedTo:		To move your player into a different room, type: movedTo(<room>).'),
 			writeln(''),
 			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
+
+
 
 
 
