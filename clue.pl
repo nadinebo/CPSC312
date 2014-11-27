@@ -460,7 +460,17 @@ myTurn :-
 	checkAccusation,
 	writeln('Do you want to make a logical suggestion, a tricky suggestion, or a sly suggestion? Enter logical./tricky./sly.'),
 	read(R),
-	myTurn(R).
+	myTurn(R),
+	writeln('Please enter your suggested suspect: '),
+	read(Suspect),
+	writeln('Now your suggested room: '),
+	read(Room),
+	writeln('Now your suggested weapon: '),
+	read(Weapon),
+	writeln('Make your suggestion to the other players!'),!,
+	myplayer(Me),
+	suggested(Suspect,Room,Weapon,Me).
+
 myTurn(logical) :- createSuggestion.
 myTurn(tricky) :- createTrickySuggestion.
 myTurn(sly) :- createSlySuggestion.
@@ -473,7 +483,7 @@ printSuggestion(Card1,Card2,Card3) :-
        writeln('May we suggest: '),
 		write(Card1),
 		write(' in the '),write(Card3),
-		write(' with a '),write(Card2),write('?'),!.
+		write(' with a '),write(Card2),write('?\n'),!.
 
 % Tricky suggestions insert one of your own cards into a suggestion
 createTrickySuggestion :-
@@ -501,11 +511,11 @@ suggestCorrectFormat(Card) :-
 	printSuggestion(Card,Card1,Card2).
 suggestCorrectFormat(Card) :-
 	cardType(Card,room),
-	suggestACombination(Card1,Card2,Card),
+	suggestACombination(Card1,Card,Card2),
 	printSuggestion(Card1,Card2,Card).
 suggestCorrectFormat(Card) :-
 	cardType(Card,weapon),
-	suggestACombination(Card1,Card,Card2),
+	suggestACombination(Card1,Card2,Card),
 	printSuggestion(Card1,Card,Card2).
 
 % Avoid suggesting cards we know are the correct answer if possible by
@@ -514,9 +524,11 @@ suggestCorrectFormat(Card) :-
 % cards, guess a possible card.
 %
 suggestACombination(Card1,Card2,Card3) :-
-	suggestSuspect(Card1), suggestRoom(Card2), suggestWeapon(Card3).
+	suggestSuspect(Card1),
+	suggestRoom(Card2),
+	suggestWeapon(Card3).
 
-% Complicated version.
+% Complicated version. Does not seem needed.
 /*
 suggestACombination(Card1,Card2,Card3) :-
 	cardType(Card1,suspect), likely(Card1), not(checkPerson(Card1)),!, %lock Prolog into the likely card
@@ -542,31 +554,37 @@ suggestACombination(Card1,Card2,Card3) :-
 */
 
 suggestSuspect(Card) :-
-	checkPerson(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+	checkPerson(Card1), cardType(Card,suspect), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestSuspect(Card) :-
 	checkPerson(Card1), cardType(Card,suspect), possibilities(Card), not(Card=Card1).
 suggestSuspect(Card) :-
 	cardType(Card,suspect), likely(Card).
 suggestSuspect(Card) :-
 	cardType(Card,suspect), possibilities(Card).
+suggestSuspect(Card) :-
+	 myplayer(Me), hascard(Me,Card).
 
 suggestRoom(Card) :-
-	checkRoom(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+	checkRoom(Card1), cardType(Card,room), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestRoom(Card) :-
 	checkRoom(Card1), cardType(Card,room), possibilities(Card), not(Card=Card1).
 suggestRoom(Card) :-
 	cardType(Card,room), likely(Card).
 suggestRoom(Card) :-
 	cardType(Card,room), possibilities(Card).
+suggestRoom(Card) :-
+	myplayer(Me), hascard(Me,Card).
 
 suggestWeapon(Card) :-
-	checkWeapon(Card1), myplayer(Me), hascard(Me,Card), not(Card=Card1).
+	checkWeapon(Card1), cardType(Card,weapon), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestWeapon(Card) :-
 	checkWeapon(Card1), cardType(Card,weapon), possibilities(Card), not(Card=Card1).
 suggestWeapon(Card) :-
 	cardType(Card,weapon), likely(Card).
 suggestWeapon(Card) :-
 	cardType(Card,weapon), possibilities(Card).
+suggestWeapon(Card) :-
+	myplayer(Me), hascard(Me,Card).
 
 % Enter the next suggestion.
 suggested(Person,Room,Weapon,Player) :-
@@ -642,23 +660,23 @@ checkAccusation.
 checkPerson(Person) :-
 	cardType(Person,suspect),
 	possibilities(Person),
-	not(cardType(OtherPerson,suspect),
+	not((cardType(OtherPerson,suspect),
 	    possibilities(OtherPerson),
-	    not(Person=OtherPerson)).
+	    not(Person=OtherPerson))).
 
 checkRoom(Room) :-
 	cardType(Room,room),
 	possibilities(Room),
-	not(cardType(OtherRoom,room),
+	not((cardType(OtherRoom,room),
 	    possibilities(OtherRoom),
-	    not(Room=OtherRoom)).
+	    not(Room=OtherRoom))).
 
 checkWeapon(Weapon) :-
 	cardType(Weapon,weapon),
 	possibilities(Weapon),
-	not(cardType(OtherWeapon,weapon),
+	not((cardType(OtherWeapon,weapon),
 	    possibilities(OtherWeapon),
-	    not(Weapon=OtherWeapon)).
+	    not(Weapon=OtherWeapon))).
 
 checkAccuse(Person,Room,Weapon) :-
 	checkPerson(Person),
