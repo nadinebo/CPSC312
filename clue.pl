@@ -1,11 +1,10 @@
 /* Clue */
-/* 
-By: Mike Fink (o0p4) and Nadine Bolotov (c5n7)
-Due Date: Thursday, November 27th, 12:00pm, use handin project2 */
+/* By: Mike Fink (o0p4) and Nadine Bolotov (c5n7) */
 
+/* Starts the game */
 clue :- setUp.
 
-% Gathers input for the game setup.
+/* Gathers input for the game setup. */
 setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Please enter rooms used (eg. [room1,room2].): '),
 				read(Rooms),
@@ -40,7 +39,7 @@ setUp :-		validateSuspects([scarlet,plum,peacock,green,mustard,white]),
 				write_ln('Game initialized! To view the full list of instructions type: help.\nIf it is your turn, type myTurn. If it is another player\'s turn type otherTurn.'),!.
 
 
-% Database definitions
+/* Database definitions */
 validsuspect(scarlet).
 validsuspect(plum).
 validsuspect(peacock).
@@ -92,10 +91,8 @@ validplayer(6).
 :- dynamic assumenothavecard/2.
 :- dynamic assumehascard/2.
 
-:- dynamic isapossibility/1.
 
-% Data Validation functions
-% =================================
+/* Data Validation functions */
 validateRooms([]).
 validateRooms([H|T]) :- not(validroom(H)),
 						assert(possibleroom(H)),
@@ -136,26 +133,25 @@ validateMyWeapons([H|T]) :- validateMyWeapon(H), validateMyWeapons(T).
 
 validateMyWeapon(W) :- validweapon(W),assert(myweapon(W)),
 	myplayer(Player),assert(hascard(Player,W)).
-%================================================
 
 
 validCard(Card) :- validweapon(Card).
 validCard(Card) :- validroom(Card).
 validCard(Card) :- validsuspect(Card).
 
-% Card Type checks what type of card a card is. Can be used to determine
-% card type or to ensure a card is of a certain type.
+/* Card Type checks what type of card a card is. Can be used to determine 
+card type or to ensure a card is of a certain type. */
 cardType(Card,suspect) :- validsuspect(Card).
 cardType(Card,weapon) :- validweapon(Card).
 cardType(Card,room) :- validroom(Card).
 
-% When we are shown a card, this function inserts that information into
-% our database.
-shown(P,Card) :- validCard(Card),assert(hascard(P,Card)).
+/*When we are shown a card, this function inserts that information into
+ our database. */
+shown(P,Card) :- validCard(Card),assert(hascard(P,Card)),assert(showncards([P,Card])),!.
 
-% Checks that a card is valid, that no one else owns the card that we
-% know of, and that we haven't confirmed a different card. If those
-% things are true then the card might be in the envelope.
+/* Checks that a card is valid, that no one else owns the card that we
+ know of, and that we havent confirmed a different card. If those
+ things are true then the card might be in the envelope. */
 possibilities(Card) :-
 	  validCard(Card),
 	  not(owns(_,Card)),
@@ -164,15 +160,15 @@ possibilities(Card) :-
 	       not(Card=OtherCard),
 	       confirmed(OtherCard))).
 
-% If all players do not have a card then it is confirmed in the
-% envelope.
+/* If all players do not have a card then it is confirmed in the
+ envelope. */
 confirmed(Card) :-
 	forall(validplayer(P), logicDoesNotHave(P,Card)).
 
-% Likely cards rely on assumptions that might not be true. All possible
-% cards are likely cards. A card is likely if we don't assume that
-% someone else owns it, and if we don't already have another probable
-% card.
+/* Likely cards rely on assumptions that might not be true. All possible
+ cards are likely cards. A card is likely if we dont assume that
+ someone else owns it, and if we dont already have another probable
+ card. */
 likely(Card) :-
 	possibilities(Card),
 	not(assumeOwns(_,Card)),
@@ -181,21 +177,21 @@ likely(Card) :-
 	       not(Card=OtherCard),
 	       probable(OtherCard))).
 
-% Probable cards are cards that we assume each player does not have.
+/* Probable cards are cards that we assume each player does not have. */
 probable(Card) :-
 	forall(validplayer(P), assumeDoesNotHave(P,Card)).
 
-% Logically, if we know a player does not have a card then they do not
-% have the card. Or, if I am the player, I know which cards I do not
-% have.
+/* Logically, if we know a player does not have a card then they do not
+ have the card. Or, if I am the player, I know which cards I do not
+ have. */
 logicDoesNotHave(P,Card) :- doesnothavecard(P,Card).
 logicDoesNotHave(P,Card) :- me(P), not(hascard(P,Card)).
 
-% If we know someone does not have a card then we can assume they do not
-% as well. If we assume a player does not have the card, then this
-% returns true. If a player is assumed to not have both of two cards and
-% they do have one of those cards then we can assume they do not have
-% the other.
+/* If we know someone does not have a card then we can assume they do not
+ as well. If we assume a player does not have the card, then this
+ returns true. If a player is assumed to not have both of two cards and
+ they do have one of those cards then we can assume they do not have
+ the other. */
 assumeDoesNotHave(P,Card) :- doesnothavecard(P,Card).
 assumeDoesNotHave(P,Card) :- assumenothavecard(P,Card).
 assumeDoesNotHave(P,Card) :-
@@ -204,19 +200,19 @@ assumeDoesNotHave(P,Card) :-
 	hascard(P,OtherCard),
 	assert(assumenothavecard(P,Card)).
 
-% If we assume that a player does not have any of 3 cards and we know
-% that they do have one of them, then we can assume they don't have both
-% of the others.
+/* If we assume that a player does not have any of 3 cards and we know
+ that they do have one of them, then we can assume they dont have both
+ of the others. */
 doesNotHaveBoth(P,Card1,Card2) :-
 	(assumedoesnothaveany(P,Card,Card1,Card2);
 	assumedoesnothaveany(P,Card1,Card,Card2);
 	assumedoesnothaveany(P,Card1,Card2,Card)),
 	hascard(P,Card).
 
-% If a player owns a card then they have the card. They can also have
-% the card if they have at least one of two and we know they do not have
-% the other. If we learn a player has a card, we can update assumptions
-% that were incorrect about that player-card combination.
+/* If a player owns a card then they have the card. They can also have
+ the card if they have at least one of two and we know they do not have
+ the other. If we learn a player has a card, we can update assumptions
+ that were incorrect about that player-card combination. */
 owns(P,Card) :- hascard(P,Card).
 owns(P,Card) :-
 	(hasAtLeastOne(P,Card,OtherCard);
@@ -224,10 +220,10 @@ owns(P,Card) :-
 	doesnothavecard(P,OtherCard),
 	assert(hascard(P,Card)), clearAssume.
 
-% Clears assumptions. E.G. if we know X has a card, then we should not
-% assume that anyone else has it also. If we know that X has a card,
-% then we should not assume that X does not have that card. This
-% function always returns true.
+/* Clears assumptions. E.G. if we know X has a card, then we should not
+ assume that anyone else has it also. If we know that X has a card,
+ then we should not assume that X does not have that card. This
+ function always returns true. */
 clearAssume :-
 	hascard(P,Card),
 	not(P1=P),
@@ -238,11 +234,11 @@ clearAssume :-
 	retract(assumenothavecard(P,Card)).
 clearAssume.
 
-% We assume a player has a card if they have the card or we assume that
-% they have the card. If a different player made two suggestions with 2
-% of 3 cards the same. And the current player showed a card on the first
-% of the suggestions, then we can assume that that player owned the card
-% that changed.
+/* We assume a player has a card if they have the card or we assume that
+ they have the card. If a different player made two suggestions with 2
+ of 3 cards the same. And the current player showed a card on the first
+ of the suggestions, then we can assume that that player owned the card
+ that changed. */
 assumeOwns(P,Card) :- hascard(P,Card).
 assumeOwns(P,Card) :- assumehascard(P,Card).
 assumeOwns(P,Card) :-
@@ -256,9 +252,9 @@ assumeOwns(P,Card) :-
 	has1of3cards(P,Card2,Card1,Card)),
 	assert(assumehascard(P,Card)).
 
-% A player suggested a card twice if there are two entries in the
-% assumedoesnothaveany database for the same two cards from the same
-% player in any order.
+/* A player suggested a card twice if there are two entries in the
+ assumedoesnothaveany database for the same two cards from the same
+ player in any order. */
 suggestedBothTwice(P,Card,Card1,Card2) :-
 	(assumedoesnothaveany(P,Card,Card1,Card2);
 	assumedoesnothaveany(P,Card1,Card,Card2);
@@ -274,16 +270,16 @@ suggestedBothTwice(P,Card,Card1,Card2) :-
 	assumedoesnothaveany(P,Card2,X,Card1)),
 	not(X=Card).
 
-% A player has at least one card if they have 1 of 3 cards and we know
-% they don't have one of those three. Ie. they have one of the other
-% two.
+/* A player has at least one card if they have 1 of 3 cards and we know
+ they dont have one of those three. Ie. they have one of the other
+ two. */
 hasAtLeastOne(P,Card1,Card2) :-
 	(has1of3cards(P,Card,Card1,Card2);
 	has1of3cards(P,Card1,Card,Card2);
 	 has1of3cards(P,Card1,Card2,Card)),
 	doesnothavecard(P,Card).
 
-% Call this function to start inputting your turn information.
+/* Call this function to start inputting your turn information. */
 myTurn :-
 	checkAccusation,
 	writeln('Do you want to make a logical suggestion, a tricky suggestion, or a sly suggestion? Enter logical./tricky./sly.'),
@@ -303,8 +299,8 @@ myTurn(logical) :- createSuggestion.
 myTurn(tricky) :- createTrickySuggestion.
 myTurn(sly) :- createSlySuggestion.
 
-% Call this function to start inputting another player's turn
-% information.
+/* Call this function to start inputting another players turn
+ information. */
 otherTurn :-
 	writeln('Whose turn is it?'),
 	read(Player),
@@ -316,28 +312,28 @@ otherTurn :-
 	read(Weapon),!,
 	suggested(Person,Room,Weapon,Player).
 
-% Creates a suggestion and prints it.
+/* Creates a suggestion and prints it. */
 createSuggestion :-
 	suggestACombination(Card1,Card2,Card3),
 	printSuggestion(Card1,Card3,Card2),!.
 
-% Prints a suggestion in a nice format.
+/* Prints a suggestion in a nice format. */
 printSuggestion(Card1,Card2,Card3) :-
        writeln('May we suggest: '),
 		write(Card1),
 		write(' in the '),write(Card3),
 		write(' with a '),write(Card2),write('?\n'),!.
 
-% Tricky suggestions insert one of your own cards into a suggestion
+/* Tricky suggestions insert one of your own cards into a suggestion */
 createTrickySuggestion :-
 	myplayer(Me),
 	findall(Card,hascard(Me,Card),List),
 	random_member(RandCard,List),
 	suggestCorrectFormat(RandCard).
 
-/*% Sly suggestions insert a card owned by the player furthest away from
-% you in play order into a suggestion. If you do not have this info a
-% tricky suggestion is offered instead.*/
+/* Sly suggestions insert a card owned by the player furthest away from
+ you in play order into a suggestion. If you do not have this info a
+ tricky suggestion is offered instead.*/
 createSlySuggestion :-
 	myplayer(Me),
 	getNextPlayer(Me,Next),
@@ -348,7 +344,7 @@ createSlySuggestion :-
 	writeln('Not enough info to make a sly suggestion, here is a tricky one instead.'),
 	createTrickySuggestion.
 
-% Formats a suggestion correctly.
+/* Formats a suggestion correctly. */
 suggestCorrectFormat(Card) :-
 	cardType(Card,suspect),
 	suggestACombination(Card,Card1,Card2),
@@ -362,10 +358,10 @@ suggestCorrectFormat(Card) :-
 	suggestACombination(Card1,Card2,Card),
 	printSuggestion(Card1,Card,Card2).
 
-/*% Avoid suggesting cards we know are the correct answer if possible by
-% using one of our cards, if not possible, use a possible card. If we
-% don't know the answer, guess a likely card. If there aren't any likely
-% cards, guess a possible card.
+/* Avoid suggesting cards we know are the correct answer if possible by
+ using one of our cards, if not possible, use a possible card. If we
+ do not know the answer, guess a likely card. If there are not any likely
+ cards, guess a possible card.
 */
 
 suggestACombination(Card1,Card2,Card3) :-
@@ -373,8 +369,8 @@ suggestACombination(Card1,Card2,Card3) :-
 	suggestRoom(Card2),
 	suggestWeapon(Card3).
 
-% Using the logic described for suggestACombination to suggest a
-% suspect.
+/* Using the logic described for suggestACombination to suggest a
+ suspect. */
 suggestSuspect(Card) :-
 	checkPerson(Card1), cardType(Card,suspect), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestSuspect(Card) :-
@@ -386,8 +382,8 @@ suggestSuspect(Card) :-
 suggestSuspect(Card) :-
 	 myplayer(Me), hascard(Me,Card).
 
-% Using the logic described for suggestACombination to suggest a
-% room.
+/* Using the logic described for suggestACombination to suggest a
+ room. */
 suggestRoom(Card) :-
 	checkRoom(Card1), cardType(Card,room), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestRoom(Card) :-
@@ -399,8 +395,8 @@ suggestRoom(Card) :-
 suggestRoom(Card) :-
 	myplayer(Me), hascard(Me,Card).
 
-% Using the logic described for suggestACombination to suggest a
-% weapon.
+/* Using the logic described for suggestACombination to suggest a
+ weapon. */
 suggestWeapon(Card) :-
 	checkWeapon(Card1), cardType(Card,weapon), myplayer(Me), hascard(Me,Card), not(Card=Card1).
 suggestWeapon(Card) :-
@@ -425,9 +421,9 @@ suggested(Person,Room,Weapon,Player) :-
 	playerShowedCard(R,Person,Room,Weapon,Player),
 	checkAccusation,!.
 
-% When a player shows a card, we gather that information and add it to
-% the database. If no one showed a card then there's probably an
-% accusation to be made.
+/* When a player shows a card, we gather that information and add it to
+ the database. If no one showed a card then there is probably an
+ accusation to be made. */
 playerShowedCard(no,Person,Room,Weapon,Player):-
 	getNextPlayer(Player,NextPlayer),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon),
@@ -450,7 +446,7 @@ playerShowedCard(yes,Person,Room,Weapon,Player) :-
 	assert(has1of3cards(N,Person,Room,Weapon)),
 	recordDoesNotHave(Player,NextPlayer,Person,Room,Weapon).
 
-% This records information about when a player does not have a card.
+/* This records information about when a player does not have a card. */
 recordDoesNotHave(Suggester,Suggester,_,_,_).
 recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
 	getNextPlayer(Player,NextPlayer),
@@ -459,18 +455,18 @@ recordDoesNotHave(Suggester,Player,Person,Room,Weapon) :-
 	assert(doesnothavecard(Player,Weapon)),
 	recordDoesNotHave(Suggester,NextPlayer,Person,Room,Weapon).
 
-% Simple modulo implementation.
+/* Simple modulo implementation. */
 modulo(M,N,Z) :- Z is mod(M,N).
 
-% Get player that comes before you (oddly named but used for checking
-% when players do not have cards).
+/* Get player that comes before you (oddly named but used for checking
+ when players do not have cards). */
 getNextPlayer(P,Next) :-
 	numofplayers(N),
 	subtract(P,2,M),
 	modulo(M,N,I),
 	Next is I+1.
 
-% Checks whether we can make an accusation.
+/* Checks whether we can make an accusation. */
 checkAccusation :-
 	checkAccuse(Person,Room,Weapon),
 	writeln('Accuse: '),
@@ -491,21 +487,21 @@ checkAccusation :-
 	write(Weapon).
 checkAccusation.
 
-% Checks if we know that a person was guilty.
+/* Checks if we know that a person was guilty. */
 checkPerson(Person) :-
 	cardType(Person,suspect),
 	possibilities(Person),
 	not((cardType(OtherPerson,suspect),
 	    possibilities(OtherPerson),
 	    not(Person=OtherPerson))).
-% Checks if we know which room it happened in.
+/* Checks if we know which room it happened in. */
 checkRoom(Room) :-
 	cardType(Room,room),
 	possibilities(Room),
 	not((cardType(OtherRoom,room),
 	    possibilities(OtherRoom),
 	    not(Room=OtherRoom))).
-% Checks if we know which weapon was used.
+/* Checks if we know which weapon was used. */
 checkWeapon(Weapon) :-
 	cardType(Weapon,weapon),
 	possibilities(Weapon),
@@ -513,22 +509,27 @@ checkWeapon(Weapon) :-
 	    possibilities(OtherWeapon),
 	    not(Weapon=OtherWeapon))).
 
-% Checks the person, room and weapon.
+/* Checks the person, room and weapon. */
 checkAccuse(Person,Room,Weapon) :-
 	checkPerson(Person),
 	checkRoom(Room),
 	checkWeapon(Weapon).
 
-% Prints all possible cards.
+/* Prints all possible cards. */
 showPossible :-
 	forall(possibilities(Card),writeln(Card)),!.
 
-% Prints all likely cards.
+/* Prints all likely cards. */
 showLikely :-
 	forall(likely(Card),writeln(Card)),!.
 
+
+/* General game information section */
+
+/* Prints what player I am on the board */
 me :- me(Name),writeln(Name).
 
+/* Prints rooms and weapons and suspects participating in the game */
 showRooms :- forall(validroom(R), writeln(R)).
 
 showWeapons :- forall(validweapon(W), writeln(W)).
@@ -537,31 +538,33 @@ showSuspects :- forall(validsuspect(S), writeln(S)).
 
 showPlayers :- forall(playerlist(P),writeln(P)).
 
-/* Can see patterns someone suggesting 1,2,3 and 1,2,4 they have 1,2 */
+/* Prints shown and suggested cards in the game */
 showSuggested :- forall(suggestion(S), writeln(S)).
-
-showMySuggestions :- forall(myplay(S), writeln(S)).
 
 showShownCards :- forall(showncards(S), writeln(S)).
 
-showShownRooms :-	forall(shownrooms(R), writeln(R)).
-
-showShownPeople :-	forall(shownpeople(P), writeln(P)).
-
-showShownWeapons :-	forall(shownweapons(W), writeln(W)).
-
-showShownByMe :- forall(shownbyme(S), writeln(S)).
-
 showNotShown :- forall(notshown(C), writeln(C)).
 
-showPossibleRooms :- forall(possibleroom(R), writeln(R)).
-
-showPossiblePeople :- forall(possibleperson(P), writeln(P)).
-
-showPossibleWeapons :- forall(possibleweapon(W),writeln(W)).
-
+/* Prints my board location (room) */
 whereami :- inroom(R),writeln(R).
 
+
+subtract(X,Y,Z) :- Z is X - Y.
+
+/* Creates a list of all the valid players playing. So if we entered 3, the
+list is [1,2,3]. */
+createPlayerList(1) :- assert(playerlist(1)),!.
+createPlayerList(N) :- not(playerlist(N)),assert(playerlist(N)),
+						subtract(N,1,Z),createPlayerList(Z).
+
+/* Which room I went to on the borad */
+movedTo(R) :- retract(inroom(X)), asserta(pastroom(X)),
+				assert(inroom(R)).
+				
+/* Room I was in before */
+wasin :- forall(pastroom(R),writeln(R)).
+
+/* Displays everything useful for the player. */
 showall :-	writeln('--------------------------'),
 			tab(2),write('C U R R E N T'),tab(2),write('G A M E'),
 			writeln(''),
@@ -576,20 +579,14 @@ showall :-	writeln('--------------------------'),
 			writeln('--------------------------'),
 			tab(7),writeln('Suggested:'),
 			showSuggested,nl,
-		
-			tab(7),writeln('Shown Cards:'),
-	
+			tab(7),writeln('Cards Shown To Us:'),
 			showShownCards,nl,
-		
 			tab(7),writeln('Not Shown Cards:'),
 			showNotShown,nl,
 			tab(7),writeln('POSSIBILIES'),
 			writeln('--------------------------'),
 			tab(7),writeln('Possible Cards:'),
 			showPossible,
-
-			%tab(7),writeln('Likely Cards:'),
-			%showLikely,
 			writeln(''),
 			writeln('--------------------------'),
 			tab(7),writeln('You are in room:'),
@@ -600,103 +597,7 @@ showall :-	writeln('--------------------------'),
 			writeln('--------------------------------------------------------'),
 			tab(5),writeln('To view the full list of instructions type: help.'),!.
 
-
-getAllRooms :- findall(H,validroom(H),Z),writeln(Z).
-
-getRoomsSize :- findall(H,validroom(H),Z),length(Z,N),writeln(N).
-
-
-printPossibleRoomsSize :- findall(H,possibleroom(H),Z),length(Z,N),writeln(N).
-
-printPossiblePeopleSize :- findall(H,possibleperson(H),Z),length(Z,N),writeln(N).
-
-printPossibleWeaponsSize :- findall(H,possibleweapon(H),Z),length(Z,N),writeln(N).
-
-
-foundRoom :- findall(H,possibleroom(H),Z),length(Z,N),N =:= 1.
-
-foundPerson :- findall(H,possibleperson(H),Z),length(Z,N),N =:= 1.
-
-foundWeapon :- findall(H,possibleweapon(H),Z),length(Z,N),N =:= 1.
-
-
-foundAll :- foundRoom, foundPerson, foundWeapon.
-
-
-removeRoomFromPossibilities(R) :- retract(possibleroom(R)).
-
-removePersonFromPossibilities(P) :- retract(possibleperson(P)).
-
-removeWeaponFromPossibilities(W) :- retract(possibleweapon(W)).
-
-removeMyRoom :- myroom(R),retract(possibleroom(R)),!.
-
-removeMyPerson :- myperson(P),retract(possibleperson(P)),!.
-
-removeMyWeapon :- myweapon(W),retract(possibleweapon(W)),!.
-
-
-accuse :- foundAll,write('It was '),possibleperson(P), write(P),
-			write(' in the '),possibleroom(R), write(R),
-			write(' with a '),possibleweapon(W), write(W).
-
-% Miscellaneous functions, some are no longer needed but we did not have time to remove them.
-subtract(X,Y,Z) :- Z is X - Y.
-
-createPlayerList(1) :- assert(playerlist(1)),!.
-createPlayerList(N) :- not(playerlist(N)),assert(playerlist(N)),
-						subtract(N,1,Z),createPlayerList(Z).
-
-printInRoomSize :- findall(H,inroom(H),Z),length(Z,N),writeln(N).
-
-getInRoomSize :- findall(H,inroom(H),Z),length(Z,N).
-
-movedTo(R) :- retract(inroom(X)), asserta(pastroom(X)),
-				assert(inroom(R)).
-
-wasin :- forall(pastroom(R),writeln(R)).
-
-
-issuggested(Person,Room,Weapon,Player) :-	validsuspect(Person),validroom(Room),
-											validweapon(Weapon),playerlist(Player),
-											assert(suggestion([Person,Room,Weapon,Player])),
-											writeln('Were any cards shown after this suggestion?'),
-											read(R),
-											shownCard(R,Person,Room,Weapon,Player).
-
-mysuggestion(Person,Room,Weapon) :- assert(myplay([Person,Room,Weapon])).
-
-shown(Card,room,Player) :- validroom(Card),assert(shownrooms([Card,Player])),
-							validplayer(Player),removeRoomFromPossibilities(Card),
-							writeln('Wasn\'t here! Do we have the answer? '),accuse,!.
-
-shown(Card,person,Player) :- validsuspect(Card),assert(shownpeople([Card,Player])),
-							validplayer(Player),removePersonFromPossibilities(Card),
-							writeln('Innocent! Do we have the answer? '),accuse,!.
-
-shown(Card,weapon,Player) :- validweapon(Card),assert(shownweapons([Card,Player])),
-							validplayer(Player),removeWeaponFromPossibilities(Card),
-							writeln('Clean! Do we have the answer? '),accuse,!.
-
-
-
-noShownCard(Person,Room,Weapon,Player) :- assert(notshown([asked: Player, query: Person, Room, Weapon])).
-
-hasnoneof(Person,Room,Weapon,Player) :- noShownCard(Person,Room,Weapon,Player).
-
-shownCard(no,Person,Room,Weapon,Player):- solution(Person,Room,Weapon). 
-shownCard(yes,Person,Room,Weapon,Player) :-	writeln('Enter the number of the player that showed the card:'),
-												read(N),
-						writeln('Enter the card shown:'),
-						read(Card),
-						shown(N,Card),
-												myplayer(Me),howManyDontHave(Player,Me,N),deduceTheyDontHaveCards(Person,Room,Weapon,N),
-												assert(showncards([showed: N,asked: Player, query: Person,Room,Weapon])).
-
-ishowed(Card,Player,Person,Room,Weapon) :-		assert(shownbyme([showed: Card, to: Player, query: Person,Room,Weapon])).
-% ===================================================
-
-% User manual function.
+/* User manual function. */
 help :-		writeln('-------------------------'),
 			tab(2),write('U S E R'),tab(2),write('M A N U A L'),
 			writeln(''),
@@ -728,7 +629,4 @@ help :-		writeln('-------------------------'),
 			tab(3),writeln('	wasin:			To view last visited room(descending order of recency), type: wasin.').
 
 
-
-
-
-/*		*/
+/* The end */
